@@ -6,6 +6,8 @@ import { useState, useEffect, useRef } from "react"
 import { ArrowLeft, Camera, Video, User, MapPin, Home, PhoneOutgoing, Image, FileImage, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
+import { useGeolocation } from "@/hooks/useGeolocation"
+import { useMapViewState } from "@/hooks/useMapViewState"
 
 const MapSelector = dynamic(() => import("@/components/map-selector"), {
   ssr: false,
@@ -14,9 +16,21 @@ const MapSelector = dynamic(() => import("@/components/map-selector"), {
 
 export default function PostPropertyPage() {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null)
-  const [isLocating, setIsLocating] = useState(false)
-  const [locationError, setLocationError] = useState<string | null>(null)
+  
+  // Use the geolocation hook
+  const { 
+    userLocation, 
+    isLocating, 
+    locationError, 
+    getCurrentLocation,
+    clearError 
+  } = useGeolocation()
+
+  // Use the map view state hook
+  const {
+    isViewingCurrentLocation,
+    setIsViewingCurrentLocation,
+  } = useMapViewState(userLocation)
   const [isPropertyTypeOpen, setIsPropertyTypeOpen] = useState(false)
   const propertyTypeRef = useRef<HTMLDivElement>(null)
   
@@ -95,101 +109,24 @@ export default function PostPropertyPage() {
     };
   }, [propertyTypeRef]);
 
-  const getCurrentLocation = () => {
-    return new Promise<{ lat: number; lng: number; accuracy: number }>((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported by this browser"))
-        return
-      }
 
-      let watchId: number | null = null
-      let bestAccuracy = Number.POSITIVE_INFINITY
-      let bestPosition: GeolocationPosition | null = null
-      let timeout: NodeJS.Timeout | null = null
-      let resolved = false
 
-      const options: PositionOptions = {
-        enableHighAccuracy: true,
-        timeout: 30000,
-        maximumAge: 0,
-      }
-
-      const cleanup = () => {
-        if (watchId !== null) {
-          navigator.geolocation.clearWatch(watchId)
-          watchId = null
-        }
-        if (timeout) {
-          clearTimeout(timeout)
-          timeout = null
-        }
-      }
-
-      const resolveWithBest = () => {
-        if (resolved) return
-        resolved = true
-        cleanup()
-
-        if (bestPosition) {
-          resolve({
-            lat: bestPosition.coords.latitude,
-            lng: bestPosition.coords.longitude,
-            accuracy: bestPosition.coords.accuracy,
-          })
-        } else {
-          reject(new Error("No valid position obtained"))
-        }
-      }
-
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const accuracy = position.coords.accuracy
-          if (accuracy < bestAccuracy) {
-            bestAccuracy = accuracy
-            bestPosition = position
-          }
-          if (accuracy < 20) {
-            resolveWithBest()
-          }
-        },
-        (error) => {
-          if (!resolved) {
-            resolved = true
-            cleanup()
-            reject(error)
-          }
-        },
-        options,
-      )
-
-      timeout = setTimeout(() => {
-        resolveWithBest()
-      }, 10000)
-    })
-  }
-
-  // Make sure this only runs on the client side
+  // Initialize location on app start
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsLocating(true)
-      setLocationError(null)
-
-      getCurrentLocation()
+      getCurrentLocation(true)
         .then((location) => {
-          setUserLocation(location)
           setSelectedLocation(location)
-          setIsLocating(false)
-          setLocationError(null)
+          setIsViewingCurrentLocation(true)
         })
         .catch((error) => {
-          setLocationError(error.message)
+          console.error("Failed to get initial location:", error)
           const defaultLocation = { lat: 12.9716, lng: 77.5946 }
-          setUserLocation(defaultLocation)
           setSelectedLocation(defaultLocation)
-          setIsLocating(false)
+          setIsViewingCurrentLocation(false)
         })
     }
-  }, [])
+  }, [getCurrentLocation, setIsViewingCurrentLocation])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -222,6 +159,13 @@ export default function PostPropertyPage() {
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
     setSelectedLocation(location)
+  }
+
+  const handleMapViewChange = (viewingCurrentLocation: boolean) => {
+    // Only update if the state is actually different
+    if (viewingCurrentLocation !== isViewingCurrentLocation) {
+      setIsViewingCurrentLocation(viewingCurrentLocation);
+    }
   }
 
   // Set default values for dropdowns after component mounts to avoid hydration issues
@@ -298,7 +242,10 @@ export default function PostPropertyPage() {
                 </button>
               </div>
 
-              <MapSelector onLocationSelect={handleLocationSelect} userLocation={userLocation} />
+              <MapSelector 
+                onLocationSelect={handleLocationSelect} 
+                userLocation={userLocation} 
+              />
             </div>
 
             <div className="mt-8">

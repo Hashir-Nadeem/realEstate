@@ -307,16 +307,6 @@ export default function MapSelector({ onLocationSelect, userLocation }: MapSelec
   return (
     <div className="relative">
       <div ref={mapContainerRef} className="h-48 rounded-lg border" />
-      <div className="absolute top-2 left-2 bg-white px-2 py-1 rounded text-xs shadow">
-        <div className="flex items-center gap-1 mb-1">
-          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-          <span>Your location</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-          <span>Property location</span>
-        </div>
-      </div>
       <div className="absolute bottom-2 left-2 bg-white px-2 py-1 rounded text-xs shadow">
         Click on map to set exact property location
       </div>

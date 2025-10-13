@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
-import { Search, List, HelpCircle, Settings, Plus, MapPin } from "lucide-react"
+import { Search, List, HelpCircle, Settings, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import Link from "next/link"
+import { PostPropertyButton } from "@/components/ui/PostPropertyButton"
+import { useGeolocation } from "@/hooks/useGeolocation"
+import { useMapViewState, City } from "@/hooks/useMapViewState"
 
 // Dynamically import map to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
@@ -14,7 +16,7 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
   loading: () => <div className="h-screen bg-gray-100 animate-pulse" />,
 })
 
-const cities = [
+const cities: City[] = [
   { name: "Bangalore", lat: 12.9716, lng: 77.5946 },
   { name: "Chennai", lat: 13.0827, lng: 80.2707 },
   { name: "Fremont", lat: 37.5485, lng: -121.9886 },
@@ -25,192 +27,106 @@ const cities = [
   { name: "Vijayawada", lat: 16.5062, lng: 80.648 },
 ]
 
+const tabs = [
+  { name: "Search", icon: Search },
+  { name: "List", icon: List },
+  { name: "Help", icon: HelpCircle },
+  { name: "Services", icon: Settings },
+]
+
 export default function HomePage() {
   const [selectedTab, setSelectedTab] = useState("Search")
   const [searchQuery, setSearchQuery] = useState("")
   const [showCityDropdown, setShowCityDropdown] = useState(false)
-  const [selectedCity, setSelectedCity] = useState<(typeof cities)[0] | null>(null)
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; accuracy?: number } | null>(null)
-  const [isLocating, setIsLocating] = useState(false)
   const [initialLocationSet, setInitialLocationSet] = useState(false)
-  const [locationError, setLocationError] = useState<string | null>(null)
-  const filteredCities = cities.filter((city) => city.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
-  const getCurrentLocation = (isInitial = false) => {
-    return new Promise<{ lat: number; lng: number; accuracy: number }>((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported by this browser"))
-        return
-      }
+  const { 
+    userLocation, 
+    isLocating, 
+    locationError, 
+    getCurrentLocation,
+    clearError 
+  } = useGeolocation()
 
-      let watchId: number | null = null
-      let bestAccuracy = Number.POSITIVE_INFINITY
-      let bestPosition: GeolocationPosition | null = null
-      let timeout: NodeJS.Timeout | null = null
-      let resolved = false
+  const {
+    selectedCity,
+    isViewingCurrentLocation,
+    handleCitySelect,
+    handleShowCurrentLocation,
+    setIsViewingCurrentLocation,
+    zoom,
+    handleZoomChange,
+  } = useMapViewState(userLocation)
 
-      const options: PositionOptions = {
-        enableHighAccuracy: true,
-        timeout: 30000, // 30 seconds
-        maximumAge: isInitial ? 0 : 30000, // Fresh for initial, 30s cache for button
-      }
+  const filteredCities = cities.filter((city) => 
+    city.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
-      const cleanup = () => {
-        if (watchId !== null) {
-          navigator.geolocation.clearWatch(watchId)
-          watchId = null
-        }
-        if (timeout) {
-          clearTimeout(timeout)
-          timeout = null
-        }
-      }
-
-      const resolveWithBest = () => {
-        if (resolved) return
-        resolved = true
-        cleanup()
-
-        if (bestPosition) {
-          console.log("Final location:", {
-            lat: bestPosition.coords.latitude,
-            lng: bestPosition.coords.longitude,
-            accuracy: bestPosition.coords.accuracy,
-          })
-          resolve({
-            lat: bestPosition.coords.latitude,
-            lng: bestPosition.coords.longitude,
-            accuracy: bestPosition.coords.accuracy,
-          })
-        } else {
-          reject(new Error("No valid position obtained"))
-        }
-      }
-
-      // Use watchPosition for continuous updates to get the best accuracy
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const accuracy = position.coords.accuracy
-          console.log(`Location update: accuracy ${accuracy}m`, {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            timestamp: new Date(position.timestamp).toLocaleTimeString(),
-          })
-
-          // Update if this is more accurate
-          if (accuracy < bestAccuracy) {
-            bestAccuracy = accuracy
-            bestPosition = position
-            console.log(`New best accuracy: ${accuracy}m`)
-          }
-
-          // If we have very good accuracy (< 20m), resolve immediately
-          if (accuracy < 20) {
-            console.log("Excellent accuracy achieved, resolving")
-            resolveWithBest()
-          }
-        },
-        (error) => {
-          console.error("Geolocation error:", error)
-          if (!resolved) {
-            resolved = true
-            cleanup()
-            reject(error)
-          }
-        },
-        options,
-      )
-
-      // Set timeout to resolve with best available after 10 seconds
-      timeout = setTimeout(() => {
-        console.log("Timeout reached, using best available location")
-        resolveWithBest()
-      }, 10000)
-    })
-  }
-
+  // Initialize location on app start - fix the state management
   useEffect(() => {
-    // Get user's current location on app start
     if (!initialLocationSet) {
-      setIsLocating(true)
-      setLocationError(null)
-
       getCurrentLocation(true)
-        .then((location) => {
-          console.log("Initial location obtained:", location)
-          setUserLocation(location)
+        .then(() => {
           setInitialLocationSet(true)
-          setIsLocating(false)
-          setLocationError(null)
+          setIsViewingCurrentLocation(true)
+          console.log('Initial location set, viewing current location: true')
         })
         .catch((error) => {
           console.error("Failed to get initial location:", error)
-          setLocationError(error.message)
-
           // Default to Bangalore if location access denied
-          const defaultLocation = { lat: 12.9716, lng: 77.5946 }
-          setUserLocation(defaultLocation)
-          setSelectedCity(cities[0]) // Set Bangalore as default
           setInitialLocationSet(true)
-          setIsLocating(false)
+          setIsViewingCurrentLocation(false)
+          console.log('Location failed, viewing current location: false')
         })
     }
-  }, [initialLocationSet])
+  }, [initialLocationSet, getCurrentLocation, setIsViewingCurrentLocation])
 
-  const handleCitySelect = (city: (typeof cities)[0]) => {
-    setSelectedCity(city)
+  const handleCitySelectWrapper = (city: City) => {
+    console.log('City selected:', city.name)
+    handleCitySelect(city)
     setSearchQuery(city.name)
     setShowCityDropdown(false)
   }
 
-  const handleRecenterToUserLocation = () => {
-    setIsLocating(true)
-    setLocationError(null)
-
-    getCurrentLocation(false)
-      .then((location) => {
-        console.log("Recenter location obtained:", location)
-        setUserLocation(location)
-        setSelectedCity(null) // Clear selected city to show user location
-        setSearchQuery("") // Clear search query
-        setIsLocating(false)
-        setLocationError(null)
-      })
-      .catch((error) => {
-        console.error("Error getting location:", error)
-        setIsLocating(false)
-
-        let errorMessage = "Unable to get your location. "
-        if (error.code) {
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage += "Please allow location access and try again."
-              break
-            case error.POSITION_UNAVAILABLE:
-              errorMessage += "Location information is unavailable."
-              break
-            case error.TIMEOUT:
-              errorMessage += "Location request timed out."
-              break
-            default:
-              errorMessage += "An unknown error occurred."
-              break
-          }
-        } else {
-          errorMessage += error.message
-        }
-
-        setLocationError(errorMessage)
-        alert(errorMessage)
-      })
+  const handleRecenterToUserLocation = async () => {
+    console.log('HomePage: Recentering to user location')
+    try {
+      await getCurrentLocation(false)
+      handleShowCurrentLocation()
+      setSearchQuery("")
+      console.log('HomePage: Recenter complete, should be viewing current location')
+    } catch (error) {
+      console.error("Error getting location:", error)
+    }
   }
 
-  const tabs = [
-    { name: "Search", icon: Search },
-    { name: "List", icon: List },
-    { name: "Help", icon: HelpCircle },
-    { name: "Services", icon: Settings },
-  ]
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setShowCityDropdown(true)
+    
+    // If user clears the search, show current location
+    if (value === "") {
+      console.log('Search cleared, showing current location')
+      handleShowCurrentLocation()
+    }
+  }
+
+  const handleMapViewChange = (viewingCurrentLocation: boolean) => {
+    // Only update if the state is actually different
+    if (viewingCurrentLocation !== isViewingCurrentLocation) {
+      console.log('🔥 HomePage: Map view change callback triggered!');
+      console.log('HomePage: New viewingCurrentLocation:', viewingCurrentLocation);
+      setIsViewingCurrentLocation(viewingCurrentLocation);
+    }
+  }
+
+  // Debug log for button state with more detail  
+  useEffect(() => {
+    console.log('🔄 HomePage: Button state effect triggered');
+    console.log('HomePage: isViewingCurrentLocation:', isViewingCurrentLocation);
+    console.log('HomePage: Selected city:', selectedCity?.name || 'none');
+    console.log('HomePage: User location:', userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'none');
+  }, [isViewingCurrentLocation, selectedCity, userLocation])
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -223,10 +139,7 @@ export default function HomePage() {
               type="text"
               placeholder="Search City Name"
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setShowCityDropdown(true)
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => setShowCityDropdown(true)}
               className="w-full pl-10 pr-4 py-3 text-base border-gray-300 rounded-lg"
             />
@@ -238,8 +151,8 @@ export default function HomePage() {
                 {filteredCities.map((city) => (
                   <button
                     key={city.name}
-                    onClick={() => handleCitySelect(city)}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 text-lg"
+                    onClick={() => handleCitySelectWrapper(city)}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 text-lg transition-colors"
                   >
                     {city.name}
                   </button>
@@ -254,7 +167,7 @@ export default function HomePage() {
             disabled={isLocating}
             variant="outline"
             size="lg"
-            className="px-3 py-3 border-gray-300 bg-transparent"
+            className="px-3 py-3 border-gray-300 bg-transparent hover:bg-gray-50 transition-colors"
             title="Get current location"
           >
             {isLocating ? (
@@ -269,6 +182,12 @@ export default function HomePage() {
         {locationError && (
           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-xs text-yellow-800">{locationError}</p>
+            <button 
+              onClick={clearError}
+              className="text-xs text-yellow-600 underline mt-1"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
@@ -276,20 +195,30 @@ export default function HomePage() {
         {userLocation?.accuracy && userLocation.accuracy < 200 && (
           <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-xs text-green-800">
-              Location accuracy: ±{Math.round(userLocation.accuracy)}m{userLocation.accuracy < 50 && " (Excellent)"}
+              Location accuracy: ±{Math.round(userLocation.accuracy)}m
+              {userLocation.accuracy < 50 && " (Excellent)"}
               {userLocation.accuracy >= 50 && userLocation.accuracy < 100 && " (Good)"}
               {userLocation.accuracy >= 100 && " (Fair)"}
             </p>
           </div>
         )}
 
-        {/* Post Property CTA */}
-        <Link href="/post-property">
-          <Button className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-base font-medium rounded-lg">
-            <Plus className="w-5 h-5 mr-2" />
-            Post Property Ad for Free!
-          </Button>
-        </Link>
+        {/* Post Property CTA - Add more debug info */}
+        <div className="mb-2">
+          {/* {process.env.NODE_ENV === 'development' && (
+            <div className="text-xs text-gray-500 mb-1 space-y-1">
+              <div>🔍 Debug: isViewingCurrentLocation = {isViewingCurrentLocation.toString()}</div>
+              <div>📍 Debug: selectedCity = {selectedCity?.name || 'null'}</div>
+              <div>🌍 Debug: userLocation = {userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'null'}</div>
+              <div>🔄 Debug: Button should show: {isViewingCurrentLocation ? 'POST PROPERTY' : 'SHOW CURRENT LOCATION'}</div>
+            </div>
+          )} */}
+          <PostPropertyButton
+            isViewingCurrentLocation={isViewingCurrentLocation}
+            onShowCurrentLocation={handleRecenterToUserLocation}
+            isLocating={isLocating}
+          />
+        </div>
       </div>
 
       {/* Map Container */}
@@ -300,7 +229,8 @@ export default function HomePage() {
             userLocation={userLocation}
             cities={cities}
             recenterTrigger={isLocating ? userLocation : null}
-            showUserLocationOnStart={!selectedCity && initialLocationSet}
+            showUserLocationOnStart={isViewingCurrentLocation && initialLocationSet}
+            onViewChange={handleMapViewChange}
           />
         ) : (
           <div className="h-full flex items-center justify-center bg-gray-100">
