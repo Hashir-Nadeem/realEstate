@@ -16,6 +16,7 @@ interface MapComponentProps {
   zoom?: number
 }
 
+
 declare global {
   interface Window {
     L: any
