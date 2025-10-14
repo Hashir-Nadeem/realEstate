@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { propertyData } from "@/data/properties"
 import { MapViewTracker } from "./map/MapViewTracker"
 import { getOptimalZoom } from "@/utils/mapUtils"
 import { useRouter } from "next/navigation"
@@ -44,6 +43,22 @@ export default function MapComponent({
   const [showSale, setShowSale] = useState(true)
   const [showRental, setShowRental] = useState(true)
 
+  // dynamic properties fetched from server (built-in + CSV submissions)
+  const [properties, setProperties] = useState<any[]>([])
+  const fetchProperties = async () => {
+    try {
+      const res = await fetch("/api/properties")
+      if (!res.ok) {
+        console.warn("Failed to fetch properties:", res.statusText)
+        return
+      }
+      const data = await res.json()
+      setProperties(data || [])
+    } catch (e) {
+      console.warn("Error fetching properties:", e)
+    }
+  }
+
   // Load Leaflet from CDN
   useEffect(() => {
     if (leafletLoaded.current) return
@@ -66,6 +81,11 @@ export default function MapComponent({
     }
 
     loadLeaflet()
+  }, [])
+
+  // fetch properties once Leaflet is loaded / on mount
+  useEffect(() => {
+    fetchProperties()
   }, [])
 
   const initializeMap = () => {
@@ -170,7 +190,7 @@ export default function MapComponent({
     }
 
     // Filter and add property markers based on toggles
-    propertyData
+    properties
       .filter(
         (property) =>
           (showSale && property.type === "sale") ||
@@ -183,102 +203,88 @@ export default function MapComponent({
           }).addTo(map)
 
           // Build a rich popup card matching the exact attached design
-          const img = (property as any).imageUrl || "https://images.unsplash.com/photo-1560185008-b033106af2fb?q=80&w=1200&auto=format&fit=crop"
+          const img = (property as any).imageUrl || "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop"
           const beds = (property as any).beds ?? ''
           const baths = (property as any).baths ?? ''
           const sqft = (property as any).sqft ?? ''
           const address = (property as any).address || ''
-          const bhk = (property as any).bhk ?? ''
           const floorNumber = (property as any).floorNumber ?? ''
           const totalFloors = (property as any).totalFloors ?? ''
-          const units = (property as any).units ?? ''
-          const locality = (property as any).locality || ''
           const facing = (property as any).facing || ''
-          const has3DTour = (property as any).has3DTour ? `<div style="position:absolute;left:10px;top:10px;background:rgba(17,24,39,0.8);color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:6px;"><span style=\"display:inline-block;width:16px;height:16px;border:1.5px solid #fff;border-radius:3px;transform:rotate(45deg);\"></span>3D Tour</div>` : ''
 
-          const heart = `<div style="position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:9999px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          const heart = `<div style="position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:9999px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15); cursor:pointer;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
             </div>`
+          
+          const closeBtn = `<div style="position:absolute;left: -10px; top: -10px; width:24px; height:24px; border-radius:50%; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="this.closest('.leaflet-popup').querySelector('.leaflet-popup-close-button').click()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </div>`
 
           // Property details with proper icons matching the design
-          const propertyDetails = [
-            sqft ? `
-              <div style="display:flex;align-items:center;gap:6px;color:#4B5563;font-size:12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5">
-                  <rect x="2" y="2" width="20" height="20" rx="2" ry="2"/>
-                  <path d="M8 12h8"/><path d="M12 8v8"/>
-                </svg>
-                <span>${sqft.toLocaleString?.() || sqft} sqft</span>
-              </div>
-            ` : '',
-            beds !== '' ? `
-              <div style="display:flex;align-items:center;gap:6px;color:#4B5563;font-size:12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5">
-                  <path d="M7 7h10v2h1a3 3 0 0 1 3 3v4H3v-4a3 3 0 0 1 3-3h1V7z"/>
-                  <path d="M5 21v-2h14v2"/>
-                </svg>
-                <span>${beds} Beds</span>
-              </div>
-            ` : '',
-            baths !== '' ? `
-              <div style="display:flex;align-items:center;gap:6px;color:#4B5563;font-size:12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5">
-                  <path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>
-                  <line x1="10" y1="5" x2="8" y2="7"/><line x1="2" y1="12" x2="22" y2="12"/>
-                  <line x1="7" y1="19" x2="9" y2="17"/><line x1="15" y1="19" x2="17" y2="17"/>
-                </svg>
-                <span>${baths} Baths</span>
-              </div>
-            ` : '',
-            facing ? `
-              <div style="display:flex;align-items:center;gap:6px;color:#4B5563;font-size:12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v6l4 2"/>
-                </svg>
-                <span>${facing[0].toUpperCase()}${facing.slice(1)}</span>
-              </div>
-            ` : '',
-            (floorNumber !== '' && totalFloors !== '') ? `
-              <div style="display:flex;align-items:center;gap:6px;color:#4B5563;font-size:12px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5">
-                  <path d="M3 21h18"/>
-                  <path d="M5 21V7l8-4v18"/>
-                  <path d="M19 21V11l-6-4"/>
-                </svg>
-                <span>${floorNumber} (Out of ${totalFloors} Floors)</span>
-              </div>
-            ` : ''
-          ].filter(Boolean).join('')
-
-          const popupContent = `
-            <div onclick="window.propertyDetailsHandler(${property.id})" style="cursor:pointer;">
-              <div style="position:relative;height:180px;overflow:hidden;background:#f3f4f6;">
-                  <img src="${img}" alt="${property.title}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
-                  ${has3DTour}
-                  ${heart}
+          const detailsGrid = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; font-size:14px; color:#374151;">
+              ${sqft ? `
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 12h4v4"/></svg>
+                  <span>${sqft.toLocaleString?.() || sqft} sqft</span>
                 </div>
-                <div style="padding:12px 14px 14px 14px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                    <span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase;">${property.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
-                    <div style="display:flex;gap:4px;">
-                      <div style="width:4px;height:4px;background:#9CA3AF;border-radius:50%;"></div>
-                      <div style="width:4px;height:4px;background:#9CA3AF;border-radius:50%;"></div>
-                      <div style="width:4px;height:4px;background:#9CA3AF;border-radius:50%;"></div>
-                    </div>
-                  </div>
-                  <div style="color:#111827;font-weight:700;font-size:20px;line-height:1.2;margin-bottom:10px;">${property.price}</div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-                    ${propertyDetails}
-                  </div>
-                  ${address ? `<div style=\"margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;\">${address}</div>` : ''}
+              ` : ''}
+              ${beds !== '' ? `
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 10v10"/></svg>
+                  <span>${beds} Beds</span>
                 </div>
+              ` : ''}
+              ${baths !== '' ? `
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 12 4-10-8 4 4 6z"/><path d="M21.39 11.88a2.2 2.2 0 0 0-2.76 0L4 19.88a2.2 2.2 0 0 0 0 2.76 2.2 2.2 0 0 0 2.76 0L21.39 14.64a2.2 2.2 0 0 0 0-2.76z"/></svg>
+                  <span>${baths} Baths</span>
+                </div>
+              ` : ''}
+              ${facing ? `
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="M2 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M12 22v-4"/><path d="m19.07 19.07-2.83-2.83"/><path d="M22 12h-4"/><path d="m19.07 4.93-2.83 2.83"/></svg>
+                  <span>${facing.charAt(0).toUpperCase() + facing.slice(1)}</span>
+                </div>
+              ` : ''}
+              ${(floorNumber !== '' && totalFloors !== '') ? `
+                <div style="display:flex;align-items:center;gap:8px; grid-column: span 2;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+                  <span>${floorNumber === '0' ? 'Ground' : floorNumber} (Out of ${totalFloors} Floors)</span>
+                </div>
+              ` : ''}
             </div>
           `
 
-          marker.bindPopup(popupContent)
+          const popupContent = `
+            <div onclick="window.propertyDetailsHandler(${property.id})" style="width:300px; cursor:pointer; font-family: sans-serif;">
+              ${closeBtn}
+              <div style="position:relative;height:180px;overflow:hidden;background:#f3f4f6; border-radius: 12px 12px 0 0;">
+                  <img src="${img}" alt="${property.title}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+                  ${heart}
+              </div>
+              <div style="padding:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <span style="background:#FEE2E2;color:#DC2626;padding:4px 10px;border-radius:16px;font-size:12px;font-weight:600;text-transform:uppercase;">${property.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
+                  <div style="display:flex;gap:4px; color: #9CA3AF;">
+                    <div style="width:5px;height:5px;background:currentColor;border-radius:50%;"></div>
+                    <div style="width:5px;height:5px;background:currentColor;border-radius:50%;"></div>
+                    <div style="width:5px;height:5px;background:currentColor;border-radius:50%;"></div>
+                  </div>
+                </div>
+                <div style="color:#111827;font-weight:700;font-size:24px;line-height:1.2;margin-bottom:12px;">${property.price}</div>
+                ${detailsGrid}
+                ${address ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">${address}</div>` : ''}
+              </div>
+            </div>
+          `
+
+          marker.bindPopup(popupContent, {
+            closeButton: true,
+            className: 'custom-popup'
+          })
 
           markersRef.current.push(marker)
         } catch (e) {
@@ -293,6 +299,13 @@ export default function MapComponent({
       }
     }
   }
+
+  // When properties change, refresh markers (if map is ready)
+  useEffect(() => {
+    if (mapRef.current && window.L && properties.length > 0) {
+      addPropertyMarkers(mapRef.current, window.L)
+    }
+  }, [properties, showSale, showRental])
 
   const addCityBoundary = (location: { lat: number; lng: number }) => {
     if (!mapRef.current || !window.L) {
@@ -587,16 +600,29 @@ export default function MapComponent({
     }
   }, [userLocation, showUserLocationOnStart])
 
-  // Update markers when toggles change
-  useEffect(() => {
-    if (mapRef.current && window.L) {
-      addPropertyMarkers(mapRef.current, window.L)
-    }
-  }, [showSale, showRental])
-
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainerRef} className="w-full h-full" />
+
+      {/* Custom Popup Styling */}
+      <style jsx global>{`
+        .custom-popup .leaflet-popup-content-wrapper {
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+          padding: 0;
+        }
+        .custom-popup .leaflet-popup-content {
+          margin: 0;
+          line-height: 1.4;
+        }
+        .custom-popup .leaflet-popup-tip-container {
+          display: none;
+        }
+        .custom-popup .leaflet-popup-close-button {
+          display: none; /* Hide default close button */
+        }
+      `}</style>
 
       {/* Map View Tracker with proper bounds detection */}
       {onViewChange && userLocation && (

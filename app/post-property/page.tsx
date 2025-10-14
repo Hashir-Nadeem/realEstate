@@ -31,6 +31,9 @@ export default function PostPropertyPage() {
     isViewingCurrentLocation,
     setIsViewingCurrentLocation,
   } = useMapViewState(userLocation)
+
+  // Use city-locality hook
+  const {
   const [isPropertyTypeOpen, setIsPropertyTypeOpen] = useState(false)
   const propertyTypeRef = useRef<HTMLDivElement>(null)
   
@@ -74,6 +77,10 @@ export default function PostPropertyPage() {
     // Photos
     photos: [] as File[],
   })
+
+  // submission state
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null)
 
   // Property type categories
   const propertyTypes = {
@@ -130,6 +137,13 @@ export default function PostPropertyPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    
+    // Handle city change to populate localities
+    if (field === 'city') {
+      handleCityChange(value)
+    } else if (field === 'locality') {
+      handleLocalityChange(value)
+    }
   }
 
   const handlePropertyTypeSelect = (value: string) => {
@@ -152,9 +166,252 @@ export default function PostPropertyPage() {
     setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...files] }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isMobile = useIsMobile()
+
+  const handleCameraCapture = async () => {
+    // Check if we're on a mobile device or if the browser supports camera access
+    const isMobileDevice = isMobile || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    
+    if (isMobileDevice) {
+      // For mobile devices, use file input with camera capture
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.capture = 'environment' // Use back camera on mobile
+      input.onchange = (e) => {
+        const files = Array.from((e.target as HTMLInputElement).files || [])
+        setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...files] }))
+      }
+      input.click()
+    } else {
+      // For desktop/laptop, try to access camera via getUserMedia API
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          // Fallback to file input if camera API not supported
+          handleFileInputFallback()
+          return
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            facingMode: 'environment' // Prefer back camera if available
+          } 
+        })
+        
+        // Create modal with camera preview
+        showCameraModal(stream)
+      } catch (error) {
+        console.error('Camera access denied or not available:', error)
+        // Fallback to file input
+        handleFileInputFallback()
+      }
+    }
+  }
+
+  const handleFileInputFallback = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = (e) => {
+      const files = Array.from((e.target as HTMLInputElement).files || [])
+      setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...files] }))
+    }
+    input.click()
+  }
+
+  const showCameraModal = (stream: MediaStream) => {
+    // Create modal overlay
+    const modal = document.createElement('div')
+    modal.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    `
+
+    // Create video element
+    const video = document.createElement('video')
+    video.style.cssText = `
+      width: 80%;
+      max-width: 500px;
+      height: auto;
+      border-radius: 10px;
+    `
+    video.srcObject = stream
+    video.autoplay = true
+    video.playsInline = true
+
+    // Create canvas for capture
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    // Create buttons container
+    const buttonsContainer = document.createElement('div')
+    buttonsContainer.style.cssText = `
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+    `
+
+    // Close modal function
+    const closeModal = () => {
+      // Stop camera stream
+      stream.getTracks().forEach(track => track.stop())
+      // Remove modal from DOM
+      document.body.removeChild(modal)
+    }
+
+    // Capture button
+    const captureBtn = document.createElement('button')
+    captureBtn.textContent = '📷 Capture Photo'
+    captureBtn.style.cssText = `
+      padding: 12px 24px;
+      background: #3B82F6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    `
+    captureBtn.onclick = () => {
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      
+      // Draw video frame to canvas
+      ctx?.drawImage(video, 0, 0)
+      
+      // Convert canvas to blob and add to photos
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `camera-photo-${Date.now()}.jpg`, { type: 'image/jpeg' })
+          setFormData((prev) => ({ ...prev, photos: [...prev.photos, file] }))
+        }
+      }, 'image/jpeg', 0.9)
+      
+      // Close modal
+      closeModal()
+    }
+
+    // Close button
+    const closeBtn = document.createElement('button')
+    closeBtn.textContent = '❌ Close'
+    closeBtn.style.cssText = `
+      padding: 12px 24px;
+      background: #EF4444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    `
+    closeBtn.onclick = closeModal
+
+    // Add elements to modal
+    buttonsContainer.appendChild(captureBtn)
+    buttonsContainer.appendChild(closeBtn)
+    modal.appendChild(video)
+    modal.appendChild(buttonsContainer)
+
+    // Add modal to page
+    document.body.appendChild(modal)
+
+    // Handle ESC key to close
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeModal()
+        document.removeEventListener('keydown', handleKeyPress)
+      }
+    }
+    document.addEventListener('keydown', handleKeyPress)
+  }
+
+  const handleGallerySelect = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.multiple = true
+    input.onchange = (e) => {
+      const files = Array.from((e.target as HTMLInputElement).files || [])
+      setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...files] }))
+    }
+    input.click()
+  }
+
+  const removePhoto = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index)
+    }))
+  }
+
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Form submitted:", formData, selectedLocation)
+    setSubmitMessage(null)
+    setIsSubmitting(true)
+
+    try {
+      // 1) upload images first (if any)
+      let uploadedUrls: string[] = []
+      if (formData.photos && formData.photos.length > 0) {
+        const fd = new FormData()
+        formData.photos.forEach((f) => fd.append("photos", f))
+        const uploadRes = await fetch("/api/upload-images", {
+          method: "POST",
+          body: fd,
+        })
+        if (!uploadRes.ok) {
+          throw new Error("Image upload failed")
+        }
+        const uploadJson = await uploadRes.json()
+        uploadedUrls = uploadJson.files || []
+      }
+
+      const payload = {
+        // include uploadedImages (URLs) and clear file objects before sending JSON
+        formData: {
+          ...formData,
+          uploadedImages: uploadedUrls,
+          photos: [], // don't send File objects
+        },
+        location: selectedLocation || null,
+        submittedAt: new Date().toISOString(),
+      }
+
+      const res = await fetch("/api/save-property", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || "Failed to save submission")
+      }
+
+      setSubmitMessage("Saved locally ✅")
+
+      // navigate back to home so map fetches updated properties
+      router.push("/")
+      return
+
+    } catch (err: any) {
+      console.error("Submit error:", err)
+      setSubmitMessage("Failed to save locally. See console.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
@@ -473,24 +730,37 @@ export default function PostPropertyPage() {
 
             <div className="grid grid-cols-2 gap-4 -mt-8">
               <div className="txt_field">
-                <input
-                  type="text"
+                <select
                   value={formData.city}
                   onChange={(e) => handleInputChange("city", e.target.value)}
                   required
-                />
+                >
+                  <option value="" disabled>Select City</option>
+                  {cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
                 <span></span>
-                <label>City</label>
               </div>
               <div className="txt_field">
-                <input
-                  type="text"
+                <select
                   value={formData.locality}
                   onChange={(e) => handleInputChange("locality", e.target.value)}
                   required
-                />
+                  disabled={!selectedCity}
+                >
+                  <option value="" disabled>
+                    {selectedCity ? "Select Locality" : "Select City First"}
+                  </option>
+                  {availableLocalities.map((locality) => (
+                    <option key={locality} value={locality}>
+                      {locality}
+                    </option>
+                  ))}
+                </select>
                 <span></span>
-                <label>Locality</label>
               </div>
             </div>
 
@@ -619,29 +889,47 @@ export default function PostPropertyPage() {
               It's Optional! But, don't forget to upload them later.
             </p>
 
-          <div className="bg-[#FFF6DA] p-4 rounded-full flex border border-yellow-200">
-            <div className="w-1/4 flex items-center justify-center">
-              <img 
-                src="/images/steps/C02B0E15-2F5B-4499-BD70-E4EB313CF76C_4_5005_c.jpeg" 
-                alt="" 
-                className="w-24 h-24 object-contain " 
-              />
+            <div className="bg-[#FFF6DA] p-4 rounded-2xl flex border border-yellow-200 mb-6">
+              <div className="w-1/4 flex items-center justify-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Image className="w-8 h-8 text-blue-600" />
+                </div>
+              </div>
+              <div className="ml-4 flex-1 flex flex-col justify-center">
+                <h3 className="text-lg font-semibold text-gray-800">85% of <span className="text-red-500">Buyers</span> enquire on Properties with Photos</h3>
+                <p className="text-lg text-gray-600">Upload Photos & Get upto <span className="text-red-500 font-medium">10X more Enquiries</span></p>
+              </div>
             </div>
-            <div className="ml-4 my-2">
-              <h3 className="text-xl">85% of <span className="text-red-500 font-normal">Buyers</span> enquire on Properties with Photos</h3>
-              <p className="text-xl font-extralight">Upload Photos & Get upto <span className="text-red-500 font-normal">10X more Enquiries</span></p>
-            </div>
-          </div>
 
             <div className="upload-area">
-              <h3 className="text-3xl text-black font-medium mb-2">Upload your file</h3>
-              <p className="text-gray-500 mb-12">File should be an image</p>
+              <h3 className="text-2xl text-black font-medium mb-2">Upload your file</h3>
+              <p className="text-gray-500 mb-8">File should be an image</p>
               
-              <div className="upload-area__drop-zoon my-12">
-                <span className="text-4xl text-blue-500">
-                  <FileImage className="w-10 h-10" />
-                </span>
-                <p className="text-gray-400 mt-2">Add Photos Now</p>
+              <div className="upload-area__drop-zoon mb-6">
+                <div className="mb-4">
+                  <FileImage className="w-12 h-12 text-blue-500 mx-auto mb-2" />
+                  <p className="text-gray-400">Add Photos Now</p>
+                </div>
+                
+                <div className="flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={handleCameraCapture}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    title={isMobile ? "Take photo with camera" : "Use computer camera"}
+                  >
+                    <Camera className="w-4 h-4" />
+                    {isMobile ? 'Camera' : 'Use Camera'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGallerySelect}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    <Image className="w-4 h-4" />
+                    Gallery
+                  </button>
+                </div>
                 
                 <input
                   type="file"
@@ -654,16 +942,43 @@ export default function PostPropertyPage() {
               </div>
               
               {formData.photos.length > 0 && (
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {formData.photos.map((photo, index) => (
-                    <div key={index} className="aspect-square bg-gray-100 rounded-lg border overflow-hidden">
-                      <img
-                        src={URL.createObjectURL(photo)}
-                        alt={`Upload ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
+                <div className="mt-6">
+                  <h4 className="text-lg font-medium mb-3">Uploaded Photos ({formData.photos.length})</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {formData.photos.map((photo, index) => (
+                      <div key={index} className="relative aspect-square bg-gray-100 rounded-lg border overflow-hidden group">
+                        <img
+                          src={URL.createObjectURL(photo)}
+                          alt={`Upload ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(index)}
+                            className="opacity-0 group-hover:opacity-100 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-all"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                          {index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {formData.photos.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Image className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 text-sm">No photos uploaded yet</p>
+                  <p className="text-gray-400 text-xs mt-1">Use camera or gallery buttons above to add photos</p>
                 </div>
               )}
             </div>
@@ -671,9 +986,16 @@ export default function PostPropertyPage() {
 
           {/* Submit Button */}
           <div className="text-center">
-            <button type="submit" className="submit-btn">
-              Login & Post Property
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Login & Post Property"}
             </button>
+            {submitMessage && (
+              <div className="mt-3 text-sm text-gray-700">{submitMessage}</div>
+            )}
           </div>
 
           {/* Process Steps */}
@@ -896,9 +1218,9 @@ export default function PostPropertyPage() {
         .upload-area {
           width: 100%;
           background-color: white;
-          box-shadow: 0 10px 60px rgb(218, 229, 255);
-          border: 2px solid #abbcff;
-          border-radius: 24px;
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+          border: 2px solid #e0e7ff;
+          border-radius: 16px;
           padding: 2rem;
           text-align: center;
           margin: 20px 0;
@@ -906,20 +1228,20 @@ export default function PostPropertyPage() {
 
         .upload-area__drop-zoon {
           position: relative;
-          height: 180px;
+          min-height: 120px;
           display: flex;
           justify-content: center;
           align-items: center;
           flex-direction: column;
-          border: 2px dashed #abbcff;
-          border-radius: 15px;
-          margin-top: 30px;
-          cursor: pointer;
-          transition: border-color 300ms ease-in-out;
+          border: 2px dashed #c7d2fe;
+          border-radius: 12px;
+          padding: 2rem;
+          transition: all 300ms ease-in-out;
         }
 
         .upload-area__drop-zoon:hover {
-          border-color: #3f86ff;
+          border-color: #6366f1;
+          background-color: #f8faff;
         }
 
         /* Steps section styling */
