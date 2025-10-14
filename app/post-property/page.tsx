@@ -8,6 +8,9 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useGeolocation } from "@/hooks/useGeolocation"
 import { useMapViewState } from "@/hooks/useMapViewState"
+import { useCityLocality } from "@/hooks/useCityLocality"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { useRouter } from "next/navigation"
 
 const MapSelector = dynamic(() => import("@/components/map-selector"), {
   ssr: false,
@@ -34,6 +37,14 @@ export default function PostPropertyPage() {
 
   // Use city-locality hook
   const {
+    selectedCity,
+    selectedLocality,
+    availableLocalities,
+    cities,
+    handleCityChange,
+    handleLocalityChange,
+  } = useCityLocality()
+
   const [isPropertyTypeOpen, setIsPropertyTypeOpen] = useState(false)
   const propertyTypeRef = useRef<HTMLDivElement>(null)
   
