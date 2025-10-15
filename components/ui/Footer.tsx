@@ -3,11 +3,11 @@ import Link from 'next/link'
 
 export const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-white py-8 px-4">
+    <footer className="bg-green-900 text-white py-8 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between">
         {/* Left side - Logo */}
         <div className="flex items-center mb-6 md:mb-0">
-          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center mr-3">
+          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
             <Image
               src="/placeholder-logo.png"
               alt="Logo"
@@ -15,10 +15,6 @@ export const Footer = () => {
               height={32}
               className="object-contain"
             />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Real Estate</h3>
-            <p className="text-sm text-gray-400">Find your dream property</p>
           </div>
         </div>
 
@@ -65,20 +61,8 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Right side - Copyright */}
-        <div className="text-center md:text-right">
-          <p className="text-sm text-gray-400">
-            © 2024 Real Estate. All rights reserved.
-          </p>
-          <div className="flex gap-4 mt-2 text-xs text-gray-500">
-            <Link href="/privacy" className="hover:text-white transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="hover:text-white transition-colors">
-              Terms of Service
-            </Link>
-          </div>
-        </div>
+        {/* Empty div for spacing */}
+        <div className="hidden md:block w-12 h-12"></div>
       </div>
     </footer>
   )

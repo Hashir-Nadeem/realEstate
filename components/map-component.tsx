@@ -16,7 +16,6 @@ interface MapComponentProps {
   zoom?: number
 }
 
-
 declare global {
   interface Window {
     L: any
@@ -213,13 +212,13 @@ export default function MapComponent({
           const totalFloors = (property as any).totalFloors ?? ''
           const facing = (property as any).facing || ''
 
-          const heart = `<div style="position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:9999px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15); cursor:pointer;">
+          const heart = `<div style="position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:9999px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15); cursor:pointer;" onclick="event.stopPropagation();">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
             </div>`
           
-          const closeBtn = `<div style="position:absolute;left: -10px; top: -10px; width:24px; height:24px; border-radius:50%; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="this.closest('.leaflet-popup').querySelector('.leaflet-popup-close-button').click()">
+          const closeBtn = `<div style="position:absolute;left: -10px; top: -10px; width:24px; height:24px; border-radius:50%; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="event.stopPropagation(); this.closest('.leaflet-popup').querySelector('.leaflet-popup-close-button').click()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </div>`
 
@@ -259,21 +258,81 @@ export default function MapComponent({
             </div>
           `
 
+          // Share Container (initially hidden)
+          const shareContainer = `
+            <div id="share-container-${property.id}" style="display:none; position:absolute; top:50px; right:12px; background:white; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.15); padding:20px; width:280px; z-index:1000;" onclick="event.stopPropagation();">
+              <div style="text-align:center; margin-bottom:16px;">
+                <h3 style="font-size:18px; font-weight:600; color:#111827; margin:0;">Share Property</h3>
+              </div>
+              
+              <!-- Social Icons -->
+              <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px;">
+                <div onclick="event.stopPropagation(); window.shareProperty('email', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#6B7280; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;" 
+                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                </div>
+                
+                <div onclick="event.stopPropagation(); window.shareProperty('whatsapp', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
+                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/></svg>
+                </div>
+                
+                <div onclick="event.stopPropagation(); window.shareProperty('facebook', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#1877F2; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
+                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                </div>
+                
+                <div onclick="event.stopPropagation(); window.shareProperty('twitter', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#1DA1F2; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
+                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                </div>
+              </div>
+              
+              <!-- Copy Link Section -->
+              <div style="border-top:1px solid #E5E7EB; padding-top:16px;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <input 
+                    type="text" 
+                    id="share-link-${property.id}"
+                    value="http://mbtrk.co/jWThMOwS6LMznDr6eNCt..."
+                    readonly 
+                    style="flex:1; padding:8px 12px; border:1px solid #D1D5DB; border-radius:6px; font-size:14px; background:#F9FAFB;"
+                    onclick="event.stopPropagation();"
+                  />
+                  <button 
+                    onclick="event.stopPropagation(); window.copyShareLink(${property.id})"
+                    style="padding:8px 16px; background:#EF4444; color:white; border:none; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer;"
+                    onmouseover="this.style.background='#DC2626'" 
+                    onmouseout="this.style.background='#EF4444'"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+          `
+
+          // Three dots menu with updated click handler to prevent event propagation
+          const threeDots = `<div style="position:absolute;right:58px;top:12px;width:36px;height:36px;border-radius:9999px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15); cursor:pointer;" onclick="event.stopPropagation(); window.toggleShareContainer(${property.id})">
+              <div style="display:flex;gap:2px; color: #9CA3AF;">
+                <div style="width:4px;height:4px;background:currentColor;border-radius:50%;"></div>
+                <div style="width:4px;height:4px;background:currentColor;border-radius:50%;"></div>
+                <div style="width:4px;height:4px;background:currentColor;border-radius:50%;"></div>
+              </div>
+            </div>`
+
           const popupContent = `
-            <div onclick="window.propertyDetailsHandler(${property.id})" style="width:300px; cursor:pointer; font-family: sans-serif;">
+            <div onclick="window.propertyDetailsHandler(${property.id})" style="width:300px; cursor:pointer; font-family: sans-serif; position:relative;">
               ${closeBtn}
+              ${shareContainer}
               <div style="position:relative;height:180px;overflow:hidden;background:#f3f4f6; border-radius: 12px 12px 0 0;">
                   <img src="${img}" alt="${property.title}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
                   ${heart}
+                  ${threeDots}
               </div>
               <div style="padding:16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                   <span style="background:#FEE2E2;color:#DC2626;padding:4px 10px;border-radius:16px;font-size:12px;font-weight:600;text-transform:uppercase;">${property.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
-                  <div style="display:flex;gap:4px; color: #9CA3AF;">
-                    <div style="width:5px;height:5px;background:currentColor;border-radius:50%;"></div>
-                    <div style="width:5px;height:5px;background:currentColor;border-radius:50%;"></div>
-                    <div style="width:5px;height:5px;background:currentColor;border-radius:50%;"></div>
-                  </div>
                 </div>
                 <div style="color:#111827;font-weight:700;font-size:24px;line-height:1.2;margin-bottom:12px;">${property.price}</div>
                 ${detailsGrid}
@@ -293,10 +352,64 @@ export default function MapComponent({
         }
       })
 
-    // Add global handler for property details navigation
+    // Add global handlers for sharing functionality
     if (typeof window !== 'undefined') {
       (window as any).propertyDetailsHandler = (propertyId: number) => {
         router.push(`/property/${propertyId}`)
+      }
+
+      // Toggle share container visibility
+      (window as any).toggleShareContainer = (propertyId: number) => {
+        const container = document.getElementById(`share-container-${propertyId}`)
+        if (container) {
+          container.style.display = container.style.display === 'none' ? 'block' : 'none'
+        }
+      }
+
+      // Share property function
+      (window as any).shareProperty = (platform: string, propertyId: number) => {
+        const propertyUrl = `${window.location.origin}/property/${propertyId}`
+        const property = properties.find(p => p.id === propertyId)
+        const title = property ? `${property.title} - ${property.price}` : 'Check out this property'
+        
+        switch (platform) {
+          case 'email':
+            window.open(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(propertyUrl)}`)
+            break
+          case 'whatsapp':
+            window.open(`https://wa.me/?text=${encodeURIComponent(`${title} ${propertyUrl}`)}`)
+            break
+          case 'facebook':
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}`)
+            break
+          case 'twitter':
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(propertyUrl)}`)
+            break
+        }
+      }
+
+      // Copy share link function
+      (window as any).copyShareLink = async (propertyId: number) => {
+        const input = document.getElementById(`share-link-${propertyId}`) as HTMLInputElement
+        if (input) {
+          try {
+            await navigator.clipboard.writeText(input.value)
+            const button = input.nextElementSibling as HTMLButtonElement
+            if (button) {
+              const originalText = button.textContent
+              button.textContent = 'Copied!'
+              button.style.background = '#10B981'
+              setTimeout(() => {
+                button.textContent = originalText
+                button.style.background = '#EF4444'
+              }, 2000)
+            }
+          } catch (err) {
+            // Fallback for older browsers
+            input.select()
+            document.execCommand('copy')
+          }
+        }
       }
     }
   }

@@ -11,6 +11,7 @@ import { useMapViewState } from "@/hooks/useMapViewState"
 import { useCityLocality } from "@/hooks/useCityLocality"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useRouter } from "next/navigation"
+import { Footer } from "@/components/ui/Footer"
 
 const MapSelector = dynamic(() => import("@/components/map-selector"), {
   ssr: false,
@@ -172,9 +173,16 @@ export default function PostPropertyPage() {
     return ""
   }
 
+  const MAX_PHOTOS = 6; // Maximum number of photos allowed
+
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...files] }))
+    const files = Array.from(event.target.files || []);
+    setFormData((prev) => {
+      const currentPhotos = prev.photos.length;
+      const remainingSlots = MAX_PHOTOS - currentPhotos;
+      const photosToAdd = files.slice(0, remainingSlots); // Only add up to the remaining slots
+      return { ...prev, photos: [...prev.photos, ...photosToAdd] };
+    });
   }
 
   const isMobile = useIsMobile()
@@ -347,15 +355,20 @@ export default function PostPropertyPage() {
   }
 
   const handleGallerySelect = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.multiple = true
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.multiple = true;
     input.onchange = (e) => {
-      const files = Array.from((e.target as HTMLInputElement).files || [])
-      setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...files] }))
-    }
-    input.click()
+      const files = Array.from((e.target as HTMLInputElement).files || []);
+      setFormData((prev) => {
+        const currentPhotos = prev.photos.length;
+        const remainingSlots = MAX_PHOTOS - currentPhotos;
+        const photosToAdd = files.slice(0, remainingSlots); // Only add up to the remaining slots
+        return { ...prev, photos: [...prev.photos, ...photosToAdd] };
+      });
+    };
+    input.click();
   }
 
   const removePhoto = (index: number) => {
@@ -449,8 +462,20 @@ export default function PostPropertyPage() {
 
   return (
     <div className="property-page-container">
-      {/* Header */}
-      <div className="bg-white border-b px-4 py-3 flex items-center">
+      {/* Static Background Image */}
+      <div className="fixed inset-0 z-0">
+        <div 
+          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=2126&auto=format&fit=crop&ixlib=rb-4.0.3')",
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/30 to-indigo-900/40"></div>
+        </div>
+      </div>
+
+      {/* Header - Fixed at top */}
+      <div className="relative z-10 bg-white/95 backdrop-blur-sm border-b px-4 py-3 flex items-center shadow-sm">
         <Link href="/">
           <button className="mr-3 mt-2 bg-transparent border-0">
             <ArrowLeft className="w-5 h-5" />
@@ -459,8 +484,10 @@ export default function PostPropertyPage() {
         <h1 className="text-xl text-black">Post property Ad for Free!</h1>
       </div>
 
-      <div className="property-form-container">
-        <form onSubmit={handleSubmit}>
+      {/* Scrollable Form Container */}
+      <div className="relative z-10 flex-1 overflow-y-auto">
+        <div className="property-form-container">
+          <form onSubmit={handleSubmit}>
           {/* Location Selector */}
           <div className="form-section"> 
             <div>
@@ -920,6 +947,7 @@ export default function PostPropertyPage() {
                 <div className="mb-4">
                   <FileImage className="w-12 h-12 text-blue-500 mx-auto mb-2" />
                   <p className="text-gray-400">Add Photos Now</p>
+                  <p className="text-sm text-gray-500 mt-2">{`${formData.photos.length}/${MAX_PHOTOS} photos uploaded`}</p>
                 </div>
                 
                 <div className="flex gap-3 justify-center">
@@ -928,6 +956,7 @@ export default function PostPropertyPage() {
                     onClick={handleCameraCapture}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                     title={isMobile ? "Take photo with camera" : "Use computer camera"}
+                    disabled={formData.photos.length >= MAX_PHOTOS} // Disable if max photos reached
                   >
                     <Camera className="w-4 h-4" />
                     {isMobile ? 'Camera' : 'Use Camera'}
@@ -936,6 +965,7 @@ export default function PostPropertyPage() {
                     type="button"
                     onClick={handleGallerySelect}
                     className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                    disabled={formData.photos.length >= MAX_PHOTOS} // Disable if max photos reached
                   >
                     <Image className="w-4 h-4" />
                     Gallery
@@ -954,7 +984,7 @@ export default function PostPropertyPage() {
               
               {formData.photos.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="text-lg font-medium mb-3">Uploaded Photos ({formData.photos.length})</h4>
+                  <h4 className="text-lg font-medium mb-3">Uploaded Photos ({formData.photos.length}/{MAX_PHOTOS})</h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {formData.photos.map((photo, index) => (
                       <div key={index} className="relative aspect-square bg-gray-100 rounded-lg border overflow-hidden group">
@@ -1058,6 +1088,10 @@ export default function PostPropertyPage() {
         </form>
       </div>
 
+      {/* Footer - Fixed at bottom
+      <div className="relative z-10">
+        <Footer />
+      </div> */}
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;500&family=Poppins:wght@100;200;300;400&display=swap');
 
@@ -1065,21 +1099,46 @@ export default function PostPropertyPage() {
         .property-page-container {
           font-family: 'Outfit', sans-serif;
           min-height: 100vh;
-          padding-bottom: 2rem;
+          display: flex;
+          flex-direction: column;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .property-form-container {
-          max-width: 800px;
-          margin: 0 auto;
-          background-color: white;
-          border-radius: 10px;
+          max-width: 650px;
+          width: 100%;
+          margin: 3rem 2rem 2rem auto;
+          background-color: rgba(255, 255, 255, 0.98);
+          border-radius: 16px;
           padding: 2rem;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          /* Remove heavy blur effects that cause performance issues */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .property-form-container {
+            max-width: calc(100% - 2rem);
+            margin: 1rem;
+            padding: 1.5rem;
+          }
+        }
+
+        @media (min-width: 1200px) {
+          .property-form-container {
+            margin-right: 4rem;
+          }
         }
 
         .form-section {
-          background: white;
+          background: rgba(255, 255, 255, 0.95);
           padding: 1.5rem;
-          border-radius: 8px;
+          border-radius: 12px;
+          margin-bottom: 1.5rem;
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+          /* Simplified styling for better performance */
         }
 
         .section-title {
@@ -1102,32 +1161,34 @@ export default function PostPropertyPage() {
           font-size: 14px;
           border: none;
           border-bottom: 1px solid black;
-          background: none;
+          background: rgba(255, 255, 255, 0.95);
           outline: none;
+          border-radius: 0;
         }
 
         select {
           font-size: 14px;
           color: #333;
-          background: #F9FAFB;
+          background: rgba(249, 250, 251, 0.95);
           border: none;
           border-radius: 0px !important;
-          border-bottom: 1px solid black; !important;
+          border-bottom: 1px solid black !important;
           padding: 0 5px;
           height: 40px;
         }
 
         .phone-select {
-          background-color: white !important;
+          background-color: rgba(255, 255, 255, 0.95) !important;
           border-radius: 0px !important;
-          border-bottom: 1px solid black; !important;
+          border-bottom: 1px solid black !important;
           padding: 10px;
           height: 45px;
         }
         
         .txt_field input:focus,
-        .txt_field select :hover {
+        .txt_field select:hover {
           border-color: #3620ffff;
+          background: rgba(255, 255, 255, 1);
         }
 
         .txt_field label {
@@ -1180,11 +1241,14 @@ export default function PostPropertyPage() {
           outline: none;
           margin: 0px 0;
           margin-bottom: 30px;
+          box-shadow: 0 4px 15px rgba(208, 38, 2, 0.3);
+          transition: all 0.3s ease;
         }
 
         .submit-btn:hover {
           border-color: #D02602;
-          transition: .5s;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(208, 38, 2, 0.4);
         }
 
         /* Radio group styling */
@@ -1217,20 +1281,22 @@ export default function PostPropertyPage() {
           border: 1px solid #ccc;
           cursor: pointer;
           transition: all 0.3s;
+          background: rgba(255, 255, 255, 0.95);
         }
 
         .radio-option input:checked + label {
-          background-color: #e6f2ff;
+          background: rgba(230, 242, 255, 0.95);
           border-color: #2691d9;
           color: #2691d9;
+          box-shadow: 0 4px 12px rgba(38, 145, 217, 0.2);
         }
 
         /* Upload area styling */
         .upload-area {
           width: 100%;
-          background-color: white;
+          background: rgba(255, 255, 255, 0.95);
           box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
-          border: 2px solid #e0e7ff;
+          border: 2px solid rgba(224, 231, 255, 0.8);
           border-radius: 16px;
           padding: 2rem;
           text-align: center;
@@ -1244,15 +1310,16 @@ export default function PostPropertyPage() {
           justify-content: center;
           align-items: center;
           flex-direction: column;
-          border: 2px dashed #c7d2fe;
+          border: 2px dashed rgba(199, 210, 254, 0.8);
           border-radius: 12px;
           padding: 2rem;
           transition: all 300ms ease-in-out;
+          background: rgba(255, 255, 255, 0.7);
         }
 
         .upload-area__drop-zoon:hover {
           border-color: #6366f1;
-          background-color: #f8faff;
+          background: rgba(248, 250, 255, 0.9);
         }
 
         /* Steps section styling */
@@ -1263,6 +1330,10 @@ export default function PostPropertyPage() {
         .step-item {
           display: flex;
           margin-bottom: 30px;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
 
         .step-image {
@@ -1287,65 +1358,23 @@ export default function PostPropertyPage() {
           font-weight: 300;
         }
 
-        @keyframes progressMove {
-          from {
-            width: 0%;
-            background-color: transparent;
-          }
-
-          to {
-            width: 100%;
-            background-color: #3f86ff;
-          }
-        }
-
-        .uploaded-file__name {
-          width: 100%;
-          max-width: 6.25rem;
-          display: inline-block;
-          font-size: 1rem;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .uploaded-file__counter {
-          font-size: 1rem;
-          color: #c4c3c4;
-        }
-
-        /* Custom dropdown styling based on your CSS */
+        /* Custom dropdown styling */
         .select-box {
           position: relative;
           width: 100%;
           margin: 30px 0;
         }
 
-        input[type="tel"] {
-          background-color: white !important;
-          border: none !important;
+        .custom-dropdown-header {
+          background-color: rgba(255, 255, 255, 0.95) !important;
           border-bottom: 1px solid black !important;
-          border-radius: 0 0px 0px 0 !important;
-          font-size: 16px !important; /* Prevents iOS zoom */
-          height: 45px !important; /* Match phone-select height */
-          padding: 0 10px !important;
-          margin: 0 !important;
-          line-height: normal !important;
-          box-shadow: none !important;
-        }
-
-        input[type="tel"]:focus {
-          outline: none !important;
-          border-color: black !important;
-        }
-
-        .phone-select:focus {
-          outline: none !important;
-          border-color: black !important;
+          padding-bottom: 8px !important;
+          margin-bottom: 0 !important;
+          border-radius: 0;
         }
 
         .options-container {
-          background: #e4e6e6;
+          background: rgba(228, 230, 230, 0.98);
           color: #1b1b1b;
           max-height: 0;
           width: 100%;
@@ -1355,233 +1384,111 @@ export default function PostPropertyPage() {
           overflow: hidden;
           order: 1;
           margin-top: -1px;
-          box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-
-        .selected {
-          margin-bottom: 8px;
-          position: relative;
-          order: 0;
+          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+          border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .options-container.active {
-          max-height: 240px;
-          opacity: 1;
-          overflow-y: auto;
-          z-index: 100;
-        }
-
-        .options-container::-webkit-scrollbar {
-          width: 8px;
-          background: #c2c9d3;
-          border-radius: 0 8px 8px 0;
-        }
-
-        .options-container::-webkit-scrollbar-thumb {
-          background: #525861;
-          border-radius: 0 8px 8px 0;
+          position: absolute !important;
+          z-index: 1000 !important;
+          max-height: 240px !important;
+          opacity: 1 !important;
+          overflow-y: auto !important;
         }
 
         .option {
-          padding: 12px 24px;
-          cursor: pointer;
+          background-color: rgba(255, 255, 255, 0.95) !important;
+          color: #111827 !important;
+          padding: 12px 16px !important;
+          border-bottom: 1px solid rgba(243, 244, 246, 0.6) !important;
+          transition: background-color 0.2s ease !important;
         }
 
+        .option:active,
         .option:hover {
-          background: #becee1;
+          background-color: rgba(239, 246, 255, 0.95) !important;
         }
 
-        .dropdown-category:not(:last-child) {
-          margin-bottom: 1px;
+        .dropdown-category .text-sm {
+          background-color: rgba(107, 114, 128, 0.95) !important;
+          color: white !important;
+          font-weight: 500 !important;
+          padding: 8px 16px !important;
         }
 
-/* iOS Safari Dropdown Specific Fixes */
+        /* Enhanced visual elements */
+        textarea {
+          background: rgba(249, 250, 251, 0.95) !important;
+          border: 1px solid rgba(229, 231, 235, 0.8) !important;
+        }
 
-@supports (-webkit-touch-callout: none) {
+        input[type="tel"] {
+          background-color: rgba(255, 255, 255, 0.95) !important;
+          border: none !important;
+          border-bottom: 1px solid black !important;
+          border-radius: 0 !important;
+          font-size: 16px !important;
+          height: 45px !important;
+          padding: 0 10px !important;
+          margin: 0 !important;
+          line-height: normal !important;
+          box-shadow: none !important;
+        }
 
-/* Fix phone number field styling for iOS */
-  input[type="text"],
-  input[type="number"],
-  input[type="email"],
-  input[type="password"] {
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    background-color: white !important;
-    border:none;
-    border-bottom: 1px solid black !important;
-    border-radius: 0 0px 0px 0 !important;
-    font-size: 16px !important; /* Prevents iOS zoom */
-    height: 45px !important; /* Match phone-select height */
-    padding: 0 10px !important;
-    margin: 0 !important;
-    line-height: normal !important;
-    box-shadow: none !important;
-  }
+        /* Smooth scrolling performance */
+        .relative.z-10.flex-1.overflow-y-auto {
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+          will-change: scroll-position;
+        }
 
-  input[type="tel"] {
-    -webkit-appearance: none !important;
-    appearance: none !important;
-    background-color: white !important;
-    border: none !important;
-    border-bottom: 1px solid black !important;
-    border-radius: 0 0px 0px 0 !important;
-    font-size: 16px !important; /* Prevents iOS zoom */
-    height: 45px !important; /* Match phone-select height */
-    padding: 0 10px !important;
-    margin: 0 !important;
-    line-height: normal !important;
-    box-shadow: none !important;
-  }
-  
-  /* Fix the flex container for the phone field */
-  .flex:has(input[type="tel"]) {
-    display: flex !important;
-    align-items: stretch !important;
-    height: 45px !important;
-  }
+        /* Responsive scrolling */
+        @media (max-height: 800px) {
+          .property-form-container {
+            margin: 1rem auto;
+            padding: 1.5rem;
+          }
+        }
 
-  /* Common fixes for all select elements */
-  select {
-    -webkit-appearance: none;
-    appearance: none;
-    background-color: #F9FAFB !important;
-    color: #333 !important;
-    border: none !important;
-    border-bottom: 1px solid black !important;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 8px center !important;
-    padding-right: 24px !important;
-    border-radius: 0px !important;
-    font-size: 14px !important; /* Match Android */
-    height: 40px !important;
-    box-shadow: none !important;
-  }
-  
-  /* Fix option colors for iOS */
-  select option {
-    background-color: white !important;
-    color: #333 !important;
-  }
-  
-  /* Fix border alignment between select and input */
-  .phone-select {
-    border-right-width: 1px !important;
-    margin-right: 0 !important;
-    padding-left: 8px !important;
-    text-align: left !important;
-    font-size: 16px !important;
-    background-color: white !important;
-  }
-  
-  /* Add vertical alignment fix */
-  .w-1/5:has(.phone-select) {
-    display: flex !important;
-    align-items: stretch !important;
-    background-color: white !important;
-  }
-  
-  /* Fix emoji display in phone-select */
-  .phone-select option {
-    font-size: 16px !important;
-  }
-  
-  /* Fix for iOS focus states */
-  input[type="tel"]:focus {
-    outline: none !important;
-    border-color: #ccc !important;
-  }
-  
-  /* Fix for when the input has content */
-  input[type="tel"]:not(:placeholder-shown) {
-    border-color: #ccc !important;
-  }
-}
-  
-  /* Custom property type dropdown fixes */
-  .custom-dropdown-header {
-    background-color: transparent !important;
-    border-bottom: 1px solid black !important;
-    padding-bottom: 8px !important;
-    margin-bottom: 0 !important;
-  }
-  
-  /* Fix dropdown positioning and behavior */
-  .options-container {
-    -webkit-overflow-scrolling: touch;
-    background-color: #e4e6e6 !important;
-    border-radius: 8px !important;
-    transition: max-height 0.4s ease, opacity 0.3s ease !important;
-    transform: translateZ(0); /* Hardware acceleration */
-    will-change: max-height, opacity;
-    max-height: 0 !important;
-    opacity: 0 !important;
-    overflow: hidden !important;
-  }
-  
-  .options-container.active {
-    position: absolute !important;
-    z-index: 1000 !important;
-    max-height: 240px !important;
-    opacity: 1 !important;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15) !important;
-    overflow-y: auto !important;
-  }
-  
-  /* Style the category headers */
-  .dropdown-category .text-sm {
-    background-color: #6B7280 !important; /* Match Android gray-500 */
-    color: white !important;
-    font-weight: 500 !important;
-    padding: 8px 16px !important;
-  }
-  
-  /* Style the options */
-  .option {
-    background-color: white !important;
-    color: #111827 !important; /* Match Android text color */
-    padding: 12px 16px !important;
-    border-bottom: 1px solid #F3F4F6 !important;
-    transition: background-color 0.2s ease !important;
-  }
-  
-  .option:active,
-  .option:hover {
-    background-color: #EFF6FF !important; /* Match Android hover color */
-  }
-  
-  /* Fix scrollbar for dropdown */
-  .options-container::-webkit-scrollbar {
-    width: 8px !important;
-    background: #E5E7EB !important; /* Match Android scrollbar track */
-  }
-  
-  .options-container::-webkit-scrollbar-thumb {
-    background: #6B7280 !important; /* Match Android scrollbar thumb */
-    border-radius: 4px !important;
-  }
-  
-  /* Make sure dropdown triggers and select elements behave consistently */
-  .select-box,
-  select,
-  .phone-select {
-    cursor: pointer !important;
-  }
-  
-  /* Fix z-index issues with dropdown */
-  .select-box {
-    z-index: 10 !important;
-    position: relative !important;
-  }
-  
-  /* Fix chevron icon alignment */
-  .custom-dropdown-header svg {
-    color: #6B7280 !important; /* Match Android icon color */
-    min-width: 20px !important;
-    min-height: 20px !important;
-  }
-}
+        /* iOS Safari fixes remain the same */
+        @supports (-webkit-touch-callout: none) {
+          input[type="text"],
+          input[type="number"],
+          input[type="email"],
+          input[type="password"] {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            border: none;
+            border-bottom: 1px solid black !important;
+            border-radius: 0 !important;
+            font-size: 16px !important;
+            height: 45px !important;
+            padding: 0 10px !important;
+            margin: 0 !important;
+            line-height: normal !important;
+            box-shadow: none !important;
+          }
+
+          select {
+            -webkit-appearance: none;
+            appearance: none;
+            background-color: rgba(249, 250, 251, 0.95) !important;
+            color: #333 !important;
+            border: none !important;
+            border-bottom: 1px solid black !important;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 8px center !important;
+            padding-right: 24px !important;
+            border-radius: 0px !important;
+            font-size: 14px !important;
+            height: 40px !important;
+            box-shadow: none !important;
+          }
+        }
       `}</style>
+    </div>
     </div>
   )
 }

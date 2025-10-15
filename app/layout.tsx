@@ -4,6 +4,8 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { Footer } from '@/components/ui/Footer'
 import { ConditionalFooter } from '@/components/ui/ConditionalFooter'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export const metadata: Metadata = {
   title: 'Real Estate - Find Your Dream Property',
@@ -23,6 +25,7 @@ export default function RootLayout({
           {children}
         </main>
         <ConditionalFooter />
+        <ToastContainer position="top-right" autoClose={3000} />
       </body>
     </html>
   )
