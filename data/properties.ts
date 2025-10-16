@@ -5,7 +5,7 @@ export const propertyData = [
     id: 2,
     lat: 12.9698,
     lng: 77.75,
-    type: "sale",
+    type: "sale-luxury", // Luxury sale property - Purple
     price: "₹1.2Cr",
     title: "3BHK Villa in Whitefield",
     area: "1800 sq ft",
@@ -21,7 +21,7 @@ export const propertyData = [
     id: 3,
     lat: 12.9352,
     lng: 77.6245,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "₹35K/month",
     title: "2BHK Apartment in Koramangala",
     area: "1200 sq ft",
@@ -33,13 +33,29 @@ export const propertyData = [
     address: "Koramangala, Bangalore, Karnataka",
     has3DTour: false,
   },
+  {
+    id: 22, // New commercial property
+    lat: 12.9716,
+    lng: 77.5946,
+    type: "sale-commercial", // Commercial sale property - Orange
+    price: "₹2.5Cr",
+    title: "Commercial Office Space",
+    area: "2500 sq ft",
+    city: "Bangalore",
+    imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop",
+    beds: 0,
+    baths: 4,
+    sqft: 2500,
+    address: "MG Road, Bangalore, Karnataka",
+    has3DTour: true,
+  },
 
   // Chennai Properties
   {
     id: 5,
     lat: 13.0827,
     lng: 80.2707,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "₹28K/month",
     title: "2BHK in T. Nagar",
     area: "1100 sq ft",
@@ -55,7 +71,7 @@ export const propertyData = [
     id: 6,
     lat: 13.0569,
     lng: 80.2425,
-    type: "sale",
+    type: "sale-residential", // Residential sale property - Red
     price: "₹95L",
     title: "3BHK Independent House in Adyar",
     area: "1600 sq ft",
@@ -73,7 +89,7 @@ export const propertyData = [
     id: 8,
     lat: 19.076,
     lng: 72.8777,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "₹65K/month",
     title: "1BHK in Bandra West",
     area: "650 sq ft",
@@ -89,9 +105,9 @@ export const propertyData = [
     id: 9,
     lat: 19.033,
     lng: 72.8697,
-    type: "sale",
+    type: "sale-luxury", // Luxury sale property - Purple
     price: "₹2.8Cr",
-    title: "2BHK in Lower Parel",
+    title: "2BHK Luxury Apartment in Lower Parel",
     area: "900 sq ft",
     city: "Mumbai",
     imageUrl: "https://images.unsplash.com/photo-1599423300746-b62533397364?q=80&w=1600&auto=format&fit=crop",
@@ -101,13 +117,29 @@ export const propertyData = [
     address: "Lower Parel, Mumbai, Maharashtra",
     has3DTour: true,
   },
+  {
+    id: 23, // New commercial property
+    lat: 19.0596,
+    lng: 72.8295,
+    type: "sale-commercial", // Commercial sale property - Orange
+    price: "₹5.2Cr",
+    title: "Commercial Shop in Andheri",
+    area: "1200 sq ft",
+    city: "Mumbai",
+    imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600&auto=format&fit=crop",
+    beds: 0,
+    baths: 2,
+    sqft: 1200,
+    address: "Andheri West, Mumbai, Maharashtra",
+    has3DTour: false,
+  },
 
   // Delhi Properties
   {
     id: 11,
     lat: 28.6139,
     lng: 77.209,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "₹45K/month",
     title: "3BHK in Connaught Place",
     area: "1400 sq ft",
@@ -123,7 +155,7 @@ export const propertyData = [
     id: 12,
     lat: 28.5355,
     lng: 77.391,
-    type: "sale",
+    type: "sale-residential", // Residential sale property - Red
     price: "₹1.8Cr",
     title: "4BHK in Noida",
     area: "2200 sqft",
@@ -147,9 +179,9 @@ export const propertyData = [
     id: 14,
     lat: 17.385,
     lng: 78.4867,
-    type: "sale",
+    type: "sale-luxury", // Luxury sale property - Purple
     price: "₹75L",
-    title: "2BHK in Banjara Hills",
+    title: "2BHK Luxury Villa in Banjara Hills",
     area: "1300 sq ft",
     city: "Hyderabad",
     imageUrl: "https://images.unsplash.com/photo-1599423300746-b62533397364?q=80&w=1600&auto=format&fit=crop",
@@ -163,7 +195,7 @@ export const propertyData = [
     id: 15,
     lat: 17.4399,
     lng: 78.3489,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "₹22K/month",
     title: "3BHK in HITEC City",
     area: "1500 sq ft",
@@ -181,7 +213,7 @@ export const propertyData = [
     id: 16,
     lat: 22.5726,
     lng: 88.3639,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "₹18K/month",
     title: "2BHK in Salt Lake",
     area: "1000 sq ft",
@@ -197,7 +229,7 @@ export const propertyData = [
     id: 17,
     lat: 22.5448,
     lng: 88.3426,
-    type: "sale",
+    type: "sale-residential", // Residential sale property - Red
     price: "₹55L",
     title: "3BHK in Park Street",
     area: "1400 sq ft",
@@ -215,7 +247,7 @@ export const propertyData = [
     id: 18,
     lat: 37.5485,
     lng: -121.9886,
-    type: "sale",
+    type: "sale-residential", // Residential sale property - Red
     price: "$1,795,000",
     title: "Single Family Home",
     area: "1834 sqft",
@@ -231,7 +263,7 @@ export const propertyData = [
     id: 19,
     lat: 37.5665,
     lng: -122.02,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "$4,500/mo",
     title: "2BR Apartment in Downtown",
     area: "1200 sqft",
@@ -249,9 +281,9 @@ export const propertyData = [
     id: 20,
     lat: 16.5062,
     lng: 80.648,
-    type: "sale",
+    type: "sale-commercial", // Commercial sale property - Orange
     price: "₹1,795,000",
-    title: "3BHK Flat For Sale",
+    title: "3BHK Commercial Space For Sale",
     area: "1834 sqft",
     city: "Vijayawada",
     imageUrl: "https://images.unsplash.com/photo-1597047084897-51e81819a499?q=80&w=1600&auto=format&fit=crop",
@@ -265,7 +297,7 @@ export const propertyData = [
     id: 21,
     lat: 16.5193,
     lng: 80.6305,
-    type: "rental",
+    type: "rental", // Blue for rental
     price: "₹15K/month",
     title: "2BHK Apartment in Governorpet",
     area: "1100 sq ft",

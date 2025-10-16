@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { MapViewTracker } from "./map/MapViewTracker"
 import { getOptimalZoom } from "@/utils/mapUtils"
 import { useRouter } from "next/navigation"
+import { PropertyTypeToggle } from "./ui/PropertyTypeToggle"
 
 interface MapComponentProps {
   selectedCity: { name: string; lat: number; lng: number } | null
@@ -40,8 +41,8 @@ export default function MapComponent({
   const leafletLoaded = useRef(false)
   const router = useRouter()
 
-  const [showSale, setShowSale] = useState(true)
-  const [showRental, setShowRental] = useState(true)
+  const [showSale, setShowSale] = useState(true) // Default to true (selected)
+  const [showRental, setShowRental] = useState(true) // Default to true (selected)
 
   // dynamic properties fetched from server (built-in + CSV submissions)
   const [properties, setProperties] = useState<any[]>([])
@@ -151,13 +152,28 @@ export default function MapComponent({
     markersRef.current.forEach((marker) => map.removeLayer(marker))
     markersRef.current = []
 
-    const createCustomIcon = (type: string) => {
+    const createCustomIcon = (type: string, saleType?: string) => {
       const colors = {
-        rental: "#EF4444", // Red for rental
-        sale: "#3B82F6", // Blue for sale
+        rental: "#3B82F6", // Blue for rental (swapped)
+        sale: "#EF4444", // Red for sale (swapped) - default red
+        "sale-luxury": "#8B5CF6", // Purple for luxury sale properties
+        "sale-commercial": "#F59E0B", // Orange for commercial sale properties
+        "sale-residential": "#EF4444", // Red for residential sale properties
       }
 
-      const color = colors[type as keyof typeof colors] || "#6B7280"
+      // Determine the color based on type and saleType
+      let color = colors.sale // default
+      if (type === "rental") {
+        color = colors.rental
+      } else if (type === "sale") {
+        if (saleType === "luxury") {
+          color = colors["sale-luxury"]
+        } else if (saleType === "commercial") {
+          color = colors["sale-commercial"]
+        } else {
+          color = colors["sale-residential"]
+        }
+      }
 
       return L.divIcon({
         html: `
@@ -193,115 +209,96 @@ export default function MapComponent({
     properties
       .filter(
         (property) =>
-          (showSale && property.type === "sale") ||
+          (showSale && (property.type === "sale" || property.type?.startsWith("sale-"))) ||
           (showRental && property.type === "rental")
       )
       .forEach((property) => {
         try {
+          // Determine saleType for icon color
+          let saleType = "residential" // default
+          if (property.type === "sale-luxury") saleType = "luxury"
+          else if (property.type === "sale-commercial") saleType = "commercial"
+          
           const marker = L.marker([property.lat, property.lng], {
-            icon: createCustomIcon(property.type),
+            icon: createCustomIcon(property.type?.startsWith("sale") ? "sale" : property.type, saleType),
           }).addTo(map)
 
           // Build a rich popup card matching the exact attached design
           const img = (property as any).imageUrl || "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop"
-          const beds = (property as any).beds ?? ''
-          const baths = (property as any).baths ?? ''
-          const sqft = (property as any).sqft ?? ''
-          const address = (property as any).address || ''
-          const floorNumber = (property as any).floorNumber ?? ''
-          const totalFloors = (property as any).totalFloors ?? ''
-          const facing = (property as any).facing || ''
+          const beds = (property as any).beds ?? '2'
+          const baths = (property as any).baths ?? '2'
+          
+          // Handle area display - use area field if available, otherwise fallback to sqft
+          let areaDisplay = ''
+          if ((property as any).area) {
+            // Use the area field which already contains unit (e.g., "1800 sq ft", "200 sqyard")
+            areaDisplay = (property as any).area
+          } else if ((property as any).sqft) {
+            // Fallback to sqft for backward compatibility
+            areaDisplay = `${(property as any).sqft} sqft`
+          } else {
+            areaDisplay = 'Area not specified'
+          }
+          
+          const address = (property as any).address || 'Sample Address, Near Mall'
+          const floorNumber = (property as any).floorNumber ?? '3'
+          const totalFloors = (property as any).totalFloors ?? '5'
+          const facing = (property as any).facing || 'North'
+          const locality = (property as any).locality || 'Koramangala'
+          const city = (property as any).city || 'Bangalore'
 
-          const heart = `<div style="position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:9999px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15); cursor:pointer;" onclick="event.stopPropagation();">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          const heart = `<div style="position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15); cursor:pointer;" onclick="event.stopPropagation();">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
             </div>`
           
-          const closeBtn = `<div style="position:absolute;left: -10px; top: -10px; width:24px; height:24px; border-radius:50%; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="event.stopPropagation(); this.closest('.leaflet-popup').querySelector('.leaflet-popup-close-button').click()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          const closeBtn = `<div style="position:absolute;left:-12px;top:-12px;width:28px;height:28px;border-radius:50%;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1001;" onclick="event.stopPropagation(); window.closeLeafletPopup()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </div>`
-
-          // Property details with proper icons matching the design
-          const detailsGrid = `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; font-size:14px; color:#374151;">
-              ${sqft ? `
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 12h4v4"/></svg>
-                  <span>${sqft.toLocaleString?.() || sqft} sqft</span>
-                </div>
-              ` : ''}
-              ${beds !== '' ? `
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 10v10"/></svg>
-                  <span>${beds} Beds</span>
-                </div>
-              ` : ''}
-              ${baths !== '' ? `
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 12 4-10-8 4 4 6z"/><path d="M21.39 11.88a2.2 2.2 0 0 0-2.76 0L4 19.88a2.2 2.2 0 0 0 0 2.76 2.2 2.2 0 0 0 2.76 0L21.39 14.64a2.2 2.2 0 0 0 0-2.76z"/></svg>
-                  <span>${baths} Baths</span>
-                </div>
-              ` : ''}
-              ${facing ? `
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="M2 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M12 22v-4"/><path d="m19.07 19.07-2.83-2.83"/><path d="M22 12h-4"/><path d="m19.07 4.93-2.83 2.83"/></svg>
-                  <span>${facing.charAt(0).toUpperCase() + facing.slice(1)}</span>
-                </div>
-              ` : ''}
-              ${(floorNumber !== '' && totalFloors !== '') ? `
-                <div style="display:flex;align-items:center;gap:8px; grid-column: span 2;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
-                  <span>${floorNumber === '0' ? 'Ground' : floorNumber} (Out of ${totalFloors} Floors)</span>
-                </div>
-              ` : ''}
-            </div>
-          `
 
           // Share Container (initially hidden)
           const shareContainer = `
-            <div id="share-container-${property.id}" style="display:none; position:absolute; top:50px; right:12px; background:white; border-radius:12px; box-shadow:0 8px 25px rgba(0,0,0,0.15); padding:20px; width:280px; z-index:1000;" onclick="event.stopPropagation();">
-              <div style="text-align:center; margin-bottom:16px;">
-                <h3 style="font-size:18px; font-weight:600; color:#111827; margin:0;">Share Property</h3>
+            <div id="share-container-${property.id}" style="display:none; position:absolute; top:40px; right:8px; background:white; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.15); padding:16px; width:250px; z-index:1000;" onclick="event.stopPropagation();">
+              <div style="text-align:center; margin-bottom:12px;">
+                <h3 style="font-size:16px; font-weight:600; color:#111827; margin:0;">Share Property</h3>
               </div>
               
-              <!-- Social Icons -->
-              <div style="display:flex; justify-content:center; gap:16px; margin-bottom:16px;">
-                <div onclick="event.stopPropagation(); window.shareProperty('email', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#6B7280; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;" 
+              <div style="display:flex; justify-content:center; gap:12px; margin-bottom:12px;">
+                <div onclick="event.stopPropagation(); window.shareProperty('email', ${property.id})" style="width:40px; height:40px; border-radius:50%; background:#6B7280; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;" 
                      onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
                 </div>
                 
-                <div onclick="event.stopPropagation(); window.shareProperty('whatsapp', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
+                <div onclick="event.stopPropagation(); window.shareProperty('whatsapp', ${property.id})" style="width:40px; height:40px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
                      onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/></svg>
                 </div>
                 
-                <div onclick="event.stopPropagation(); window.shareProperty('facebook', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#1877F2; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
+                <div onclick="event.stopPropagation(); window.shareProperty('facebook', ${property.id})" style="width:40px; height:40px; border-radius:50%; background:#1877F2; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
                      onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                 </div>
                 
-                <div onclick="event.stopPropagation(); window.shareProperty('twitter', ${property.id})" style="width:50px; height:50px; border-radius:50%; background:#1DA1F2; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
+                <div onclick="event.stopPropagation(); window.shareProperty('twitter', ${property.id})" style="width:40px; height:40px; border-radius:50%; background:#1DA1F2; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
                      onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
                 </div>
               </div>
               
-              <!-- Copy Link Section -->
-              <div style="border-top:1px solid #E5E7EB; padding-top:16px;">
-                <div style="display:flex; gap:8px; align-items:center;">
+              <div style="border-top:1px solid #E5E7EB; padding-top:12px;">
+                <div style="display:flex; gap:6px; align-items:center;">
                   <input 
                     type="text" 
                     id="share-link-${property.id}"
                     value="http://mbtrk.co/jWThMOwS6LMznDr6eNCt..."
                     readonly 
-                    style="flex:1; padding:8px 12px; border:1px solid #D1D5DB; border-radius:6px; font-size:14px; background:#F9FAFB;"
+                    style="flex:1; padding:6px 10px; border:1px solid #D1D5DB; border-radius:4px; font-size:12px; background:#F9FAFB;"
                     onclick="event.stopPropagation();"
                   />
                   <button 
                     onclick="event.stopPropagation(); window.copyShareLink(${property.id})"
-                    style="padding:8px 16px; background:#EF4444; color:white; border:none; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer;"
+                    style="padding:6px 12px; background:#EF4444; color:white; border:none; border-radius:4px; font-size:12px; font-weight:500; cursor:pointer;"
                     onmouseover="this.style.background='#DC2626'" 
                     onmouseout="this.style.background='#EF4444'"
                   >
@@ -312,38 +309,110 @@ export default function MapComponent({
             </div>
           `
 
-          // Three dots menu with updated click handler to prevent event propagation
-          const threeDots = `<div style="position:absolute;right:58px;top:12px;width:36px;height:36px;border-radius:9999px;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15); cursor:pointer;" onclick="event.stopPropagation(); window.toggleShareContainer(${property.id})">
-              <div style="display:flex;gap:2px; color: #9CA3AF;">
-                <div style="width:4px;height:4px;background:currentColor;border-radius:50%;"></div>
-                <div style="width:4px;height:4px;background:currentColor;border-radius:50%;"></div>
-                <div style="width:4px;height:4px;background:currentColor;border-radius:50%;"></div>
+          // Three dots menu
+          const threeDots = `<div style="position:absolute;right:48px;top:8px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.15); cursor:pointer;" onclick="event.stopPropagation(); window.toggleShareContainer(${property.id})">
+              <div style="display:flex;gap:2px; color: #666;">
+                <div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div>
+                <div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div>
+                <div style="width:3px;height:3px;background:currentColor;border-radius:50%;"></div>
               </div>
             </div>`
 
           const popupContent = `
-            <div onclick="window.propertyDetailsHandler(${property.id})" style="width:300px; cursor:pointer; font-family: sans-serif; position:relative;">
+            <div style="position:relative;">
               ${closeBtn}
-              ${shareContainer}
-              <div style="position:relative;height:180px;overflow:hidden;background:#f3f4f6; border-radius: 12px 12px 0 0;">
-                  <img src="${img}" alt="${property.title}" style="width:100%;height:100%;object-fit:cover;display:block;"/>
+              <div onclick="window.propertyDetailsHandler(${property.id})" style="width:400px; cursor:pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                ${shareContainer}
+                
+                <!-- Image Section -->
+                <div style="position:relative; width:100%; height:160px; overflow:hidden;">
+                  <img src="${img}" alt="${property.title}" style="width:100%; height:100%; object-fit:cover; display:block;"/>
                   ${heart}
                   ${threeDots}
-              </div>
-              <div style="padding:16px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                  <span style="background:#FEE2E2;color:#DC2626;padding:4px 10px;border-radius:16px;font-size:12px;font-weight:600;text-transform:uppercase;">${property.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
                 </div>
-                <div style="color:#111827;font-weight:700;font-size:24px;line-height:1.2;margin-bottom:12px;">${property.price}</div>
-                ${detailsGrid}
-                ${address ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;">${address}</div>` : ''}
+                
+                <!-- Content Section -->
+                <div style="padding:12px 16px 16px 16px;">
+                  <!-- Row 1: Property Type and Status -->
+                  <div style="margin-bottom:6px;">
+                    <span style="color:#333; font-size:14px; font-weight:600; line-height:1.3; display:block;">
+                      ${beds} BHK Flat FOR ${property.type === 'sale' ? 'SALE' : 'RENT'} in ${locality}, ${city}
+                    </span>
+                  </div>
+                  
+                  <!-- Row 2: Price -->
+                  <div style="margin-bottom:10px;">
+                    <span style="color:#000; font-size:18px; font-weight:700; display:block;">${property.price}</span>
+                  </div>
+                  
+                  <!-- Row 3: Details with icons - Flexible wrap layout -->
+                  <div style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-not oottom:8px; font-size:12px; color:#666;">
+                    <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L22 22H2L12 2z"/>
+                        <path d="M12 8v6"/>
+                        <path d="M8 18h8"/>
+                      </svg>
+                      <span style="white-space:nowrap;">${areaDisplay}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/>
+                        <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/>
+                        <path d="M12 10v10"/>
+                        <path d="M2 14h20"/>
+                        <path d="M7 18h2"/>
+                        <path d="M15 18h2"/>
+                      </svg>
+                      <span style="white-space:nowrap;">${beds} Beds</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 11H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h5m0-7v7m0-7h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-5m0-7V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2Z"/>
+                      </svg>
+                      <span style="white-space:nowrap;">${baths} Baths</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                        <path d="M12 2v2"/>
+                        <path d="M12 20v2"/>
+                        <path d="M4.93 4.93l1.41 1.41"/>
+                        <path d="M17.66 17.66l1.41 1.41"/>
+                        <path d="M2 12h2"/>
+                        <path d="M20 12h2"/>
+                        <path d="M6.34 17.66l-1.41 1.41"/>
+                        <path d="M19.07 4.93l-1.41 1.41"/>
+                      </svg>
+                      <span style="white-space:nowrap;">${facing}</span>
+                    </div>
+                    ${floorNumber !== '' && totalFloors !== '' ? `
+                      <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 21h18"/>
+                          <path d="M5 21V7l8-4v18"/>
+                          <path d="M19 21V11l-6-4"/>
+                        </svg>
+                        <span style="white-space:nowrap;">${floorNumber === '0' ? 'Ground' : floorNumber} of ${totalFloors} Floors</span>
+                      </div>
+                    ` : ''}
+                  </div>
+                  
+                  <!-- Row 4: Address -->
+                  <div style="color:#888; font-size:12px; line-height:1.4; word-wrap:break-word; overflow-wrap:break-word;">
+                    ${address}
+                  </div>
+                </div>
               </div>
             </div>
           `
 
           marker.bindPopup(popupContent, {
-            closeButton: true,
-            className: 'custom-popup'
+            closeButton: false,
+            className: 'custom-popup',
+            maxWidth: 400,
+            minWidth: 400
           })
 
           markersRef.current.push(marker)
@@ -354,6 +423,12 @@ export default function MapComponent({
 
     // Add global handlers for sharing functionality
     if (typeof window !== 'undefined') {
+      (window as any).closeLeafletPopup = () => {
+        if (mapRef.current) {
+          mapRef.current.closePopup()
+        }
+      }
+
       (window as any).propertyDetailsHandler = (propertyId: number) => {
         router.push(`/property/${propertyId}`)
       }
@@ -721,9 +796,8 @@ export default function MapComponent({
       {/* Custom Popup Styling */}
       <style jsx global>{`
         .custom-popup .leaflet-popup-content-wrapper {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+          background: transparent;
+          box-shadow: none;
           padding: 0;
         }
         .custom-popup .leaflet-popup-content {
@@ -736,6 +810,11 @@ export default function MapComponent({
         .custom-popup .leaflet-popup-close-button {
           display: none; /* Hide default close button */
         }
+        /* Ensure close button is clickable */
+        .custom-popup .leaflet-popup-content-wrapper > div > div[style*="position:absolute"][style*="left:-12px"] {
+          pointer-events: auto !important;
+          z-index: 1001 !important;
+        }
       `}</style>
 
       {/* Map View Tracker with proper bounds detection */}
@@ -747,42 +826,13 @@ export default function MapComponent({
         />
       )}
 
-      {/* Map UI Controls */}
-      <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 text-xs z-[1000]">
-        <h4 className="font-semibold mb-2">Property Types</h4>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span>Sale Properties</span>
-            <div
-              className={`ml-auto w-12 h-6 rounded-full flex items-center cursor-pointer transition-colors ${
-                showSale ? "bg-blue-500" : "bg-gray-300"
-              }`}
-              onClick={() => setShowSale((prev) => !prev)}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                  showSale ? "translate-x-6" : "translate-x-0"
-                }`}
-              ></div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>Rental Properties</span>
-            <div
-              className={`ml-auto w-12 h-6 rounded-full flex items-center cursor-pointer transition-colors ${
-                showRental ? "bg-red-500" : "bg-gray-300"
-              }`}
-              onClick={() => setShowRental((prev) => !prev)}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                  showRental ? "translate-x-6" : "translate-x-0"
-                }`}
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Property Type Toggle */}
+      <PropertyTypeToggle
+        showSale={showSale}
+        showRental={showRental}
+        onSaleToggle={setShowSale}
+        onRentalToggle={setShowRental}
+      />
     </div>
   )
 }

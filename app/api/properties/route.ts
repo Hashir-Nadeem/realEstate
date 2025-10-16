@@ -89,10 +89,10 @@ export async function GET() {
             id: Number(id) || `csv-${Date.now()}-${idx}`,
             lat: parseFloat(lat) || undefined,
             lng: parseFloat(lng) || undefined,
-            type: youAreHereTo === "sell" ? "sale" : "rental",
+            type: youAreHereTo === "sell" ? "sale-residential" : "rental", // Default to residential for sale
             price: formattedPrice,
             title: title || (fullAddress || "Submitted Property"),
-            area: area ? `${area} ${areaUnit}` : "",
+            area: area && areaUnit ? `${area} ${areaUnit === 'sqft' ? 'sqft' : areaUnit === 'sqyard' ? 'sq yard' : areaUnit === 'sqmeter' ? 'sq meter' : areaUnit === 'acres' ? 'acres' : areaUnit}` : "",
             city: city || "",
             imageUrl: imageUrl,
             beds: bedrooms ? Number(bedrooms) : undefined,
@@ -111,6 +111,7 @@ export async function GET() {
             facing: facing || "",
             floorNumber: floorNumber || "",
             totalFloors: totalFloors || "",
+            locality: locality || "",
           }
 
           // only include if lat/lng are present

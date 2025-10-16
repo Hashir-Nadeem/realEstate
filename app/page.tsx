@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { PostPropertyButton } from "@/components/ui/PostPropertyButton"
 import { useGeolocation } from "@/hooks/useGeolocation"
 import { useMapViewState, City } from "@/hooks/useMapViewState"
+import Link from "next/link"
 
 // Dynamically import map to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
@@ -249,6 +250,16 @@ export default function HomePage() {
           {tabs.map((tab) => {
             const Icon = tab.icon
             const isActive = selectedTab === tab.name
+
+            if (tab.name === "List") {
+              return (
+                <Link href="/list" key={tab.name} className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-600 hover:text-gray-800 transition-colors">
+                  <Icon className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">{tab.name}</span>
+                </Link>
+              )
+            }
+
             return (
               <button
                 key={tab.name}

@@ -20,6 +20,7 @@ const MapSelector = dynamic(() => import("@/components/map-selector"), {
 
 export default function PostPropertyPage() {
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [isFormEnabled, setIsFormEnabled] = useState(false) // Track form enabled/disabled state
   
   // Use the geolocation hook
   const { 
@@ -94,22 +95,30 @@ export default function PostPropertyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState<string | null>(null)
 
-  // Property type categories
+  // Property type categories - Updated to match attached image
   const propertyTypes = {
     "ALL RESIDENTIAL": [
-      { value: "flat-apartment", label: "Flat/Apartment" },
+      { value: "flat-apartment", label: "Flat/ Apartment" },
       { value: "residential-house", label: "Residential House" },
       { value: "villa", label: "Villa" },
-      { value: "independent-house", label: "Independent House" },
-      { value: "residential-plot", label: "Residential Plot" }
+      { value: "builder-floor-apartment", label: "Builder Floor Apartment" },
+      { value: "residential-land-plot", label: "Residential Land/ Plot" },
+      { value: "penthouse", label: "Penthouse" },
+      { value: "studio-apartment", label: "Studio Apartment" }
     ],
     "ALL COMMERCIAL": [
-      { value: "commercial-office", label: "Commercial Office" },
+      { value: "commercial-office-space", label: "Commercial Office Space" },
+      { value: "office-in-it-park-sez", label: "Office in IT Park/ SEZ" },
       { value: "commercial-shop", label: "Commercial Shop" },
-      { value: "warehouse", label: "Warehouse" },
+      { value: "commercial-showroom", label: "Commercial Showroom" },
+      { value: "commercial-land", label: "Commercial Land" },
+      { value: "warehouse-godown", label: "Warehouse/ Godown" },
+      { value: "industrial-land", label: "Industrial Land" },
+      { value: "industrial-building", label: "Industrial Building" }
     ],
-    "OTHERS": [
-      { value: "agricultural-land", label: "Agricultural Land" }
+    "ALL AGRICULTURAL": [
+      { value: "agricultural-land", label: "Agricultural Land" },
+      { value: "farm-house", label: "Farm House" }
     ]
   }
   
@@ -460,6 +469,16 @@ export default function PostPropertyPage() {
     }
   }, [])
 
+  const handleEnableForm = (enable: boolean) => {
+    setIsFormEnabled(enable)
+    if (enable) {
+      setFormData(prev => ({
+        ...prev,
+        youAreHereTo: "rent", // Default to Rent/Lease when enabled
+      }))
+    }
+  }
+
   return (
     <div className="property-page-container">
       {/* Static Background Image */}
@@ -467,7 +486,7 @@ export default function PostPropertyPage() {
         <div 
           className="w-full h-full bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=2126&auto=format&fit=crop&ixlib=rb-4.0.3')",
+            backgroundImage: "url('/page_background.jpeg')", // Use local image
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/30 to-indigo-900/40"></div>
@@ -489,7 +508,7 @@ export default function PostPropertyPage() {
         <div className="property-form-container">
           <form onSubmit={handleSubmit}>
           {/* Location Selector */}
-          <div className="form-section"> 
+          <div className="form-section">
             <div>
               <div className="text-sm font-medium -mt-4">
                 Are you at the center of the property to post Ad?
@@ -524,15 +543,16 @@ export default function PostPropertyPage() {
               <div className="flex gap-2 mt-4 mb-4">
                 <button
                   type="button"
-                  className={`py-2 px-4 rounded-full ${
-                    selectedLocation && userLocation
-                      ? "bg-green-600 hover:bg-green-700 text-white"
-                      : "border border-gray-300"
-                  }`}
+                  className={`py-2 px-4 rounded-full ${isFormEnabled ? "bg-green-600 hover:bg-green-700 text-white" : "border border-gray-300"}`}
+                  onClick={() => handleEnableForm(true)}
                 >
-                  {selectedLocation && userLocation ? "Yes - Location Set" : "Yes"}
+                  Yes
                 </button>
-                <button type="button" className="py-2 px-4 rounded-full border border-gray-300">
+                <button
+                  type="button"
+                  className={`py-2 px-4 rounded-full ${!isFormEnabled ? "bg-red-600 hover:bg-red-700 text-white" : "border border-gray-300"}`}
+                  onClick={() => handleEnableForm(false)}
+                >
                   No
                 </button>
               </div>
@@ -543,43 +563,47 @@ export default function PostPropertyPage() {
               />
             </div>
 
-            <div className="mt-8">
-                <div className="text-xl font-medium mb-2">
-                  You are looking to <span className="text-red-500">*</span>
+            {/* Form Fields */}
+            <div className={`mt-8 ${isFormEnabled ? "" : "opacity-50 pointer-events-none"}`}>
+              <div className="text-xl font-medium mb-2">
+                You are looking to <span className="text-red-500">*</span>
+              </div>
+              <div className="radio-group grid-cols-2">
+                <div className="radio-option">
+                  <input 
+                    type="radio" 
+                    id="sell" 
+                    name="youAreHereTo" 
+                    value="sell"
+                    checked={formData.youAreHereTo === "sell"}
+                    onChange={(e) => handleInputChange("youAreHereTo", e.target.value)}
+                    disabled={!isFormEnabled} // Disable when form is not enabled
+                  />
+                  <label htmlFor="sell">Sell</label>
                 </div>
-                <div className="radio-group grid-cols-2">
-                  <div className="radio-option">
-                    <input 
-                      type="radio" 
-                      id="sell" 
-                      name="youAreHereTo" 
-                      value="sell"
-                      checked={formData.youAreHereTo === "sell"}
-                      onChange={(e) => handleInputChange("youAreHereTo", e.target.value)}
-                    />
-                    <label htmlFor="sell">Sell</label>
-                  </div>
-                  <div className="radio-option">
-                    <input 
-                      type="radio" 
-                      id="rent" 
-                      name="youAreHereTo" 
-                      value="rent"
-                      checked={formData.youAreHereTo === "rent"}
-                      onChange={(e) => handleInputChange("youAreHereTo", e.target.value)}
-                    />
-                    <label htmlFor="rent">Rent / Lease</label>
-                  </div>
+                <div className="radio-option">
+                  <input 
+                    type="radio" 
+                    id="rent" 
+                    name="youAreHereTo" 
+                    value="rent"
+                    checked={formData.youAreHereTo === "rent"}
+                    onChange={(e) => handleInputChange("youAreHereTo", e.target.value)}
+                    disabled={!isFormEnabled} // Disable when form is not enabled
+                  />
+                  <label htmlFor="rent">Rent / Lease</label>
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-4 -mt-6">
+            <div className="flex gap-4 -mt-6">
               <div className="w-4/5 txt_field">
                 <input
                   type="number"
                   value={formData.price}
                   onChange={(e) => handleInputChange("price", e.target.value)}
                   required
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 />
                 <span></span>
                 <label>Price</label>
@@ -589,6 +613,7 @@ export default function PostPropertyPage() {
                   value={formData.priceUnit}
                   onChange={(e) => handleInputChange("priceUnit", e.target.value)}
                   className="border-b border-gray-300 w-full p-2"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="lac">Lac</option>
                   <option value="crore">Cr</option>
@@ -599,10 +624,10 @@ export default function PostPropertyPage() {
 
               <div className="-mt-6">
             {/* Custom Property Type Dropdown */}
-            <div className="select-box" ref={propertyTypeRef}>
+            <div className={`select-box ${!isFormEnabled ? "opacity-50 pointer-events-none" : ""}`} ref={propertyTypeRef}>
               <div 
                 className={`custom-dropdown-header border-b border-gray-300 py-2 px-1 flex justify-between items-center cursor-pointer selected`}
-                onClick={() => setIsPropertyTypeOpen(!isPropertyTypeOpen)}
+                onClick={() => isFormEnabled && setIsPropertyTypeOpen(!isPropertyTypeOpen)}
               >
                 <div className="flex flex-col text-sm">
                   <span className={`${formData.propertyCategory ? "text-black" : "text-gray-400"} mt-1`}>
@@ -626,7 +651,7 @@ export default function PostPropertyPage() {
                       <div 
                         key={option.value}
                         className="option py-3 text-sm px-4 hover:bg-gray-100 bg-white cursor-pointer"
-                        onClick={() => handlePropertyTypeSelect(option.value)}
+                        onClick={() => isFormEnabled && handlePropertyTypeSelect(option.value)}
                       >
                         <label>{option.label}</label>
                       </div>
@@ -642,6 +667,7 @@ export default function PostPropertyPage() {
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
                 required
+                disabled={!isFormEnabled} // Disable when form is not enabled
               />
               <span></span>
               <label>Property Title</label>
@@ -655,6 +681,7 @@ export default function PostPropertyPage() {
                   value={formData.area}
                   onChange={(e) => handleInputChange("area", e.target.value)}
                   required
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 />
                 <span></span>
                 <label>Area</label>
@@ -664,6 +691,7 @@ export default function PostPropertyPage() {
                   value={formData.areaUnit}
                   onChange={(e) => handleInputChange("areaUnit", e.target.value)}
                   className="border-b border-gray-300 w-full p-2"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="sqft">SFT</option>
                   <option value="sqyard">Sq Yard</option>
@@ -679,6 +707,7 @@ export default function PostPropertyPage() {
                   value={formData.bedrooms}
                   onChange={(e) => handleInputChange("bedrooms", e.target.value)}
                   className="border-b border-gray-300 w-full p-2"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="" disabled>Beds</option>
                   <option value="1">1 Bedroom</option>
@@ -693,6 +722,7 @@ export default function PostPropertyPage() {
                   value={formData.bathrooms}
                   onChange={(e) => handleInputChange("bathrooms", e.target.value)}
                   className="border-b border-gray-300 w-full p-2"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="" disabled>Baths</option>
                   <option value="1">1 Bath</option>
@@ -707,6 +737,7 @@ export default function PostPropertyPage() {
                   value={formData.facing}
                   onChange={(e) => handleInputChange("facing", e.target.value)}
                   className="border-b border-gray-300 w-full p-2"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="" disabled>Facing</option>
                   <option value="north">North</option>
@@ -724,6 +755,7 @@ export default function PostPropertyPage() {
                   value={formData.floorNumber}
                   onChange={(e) => handleInputChange("floorNumber", e.target.value)}
                   className="border-b border-gray-300 w-full p-2"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="" disabled>Floor</option>
                   <option value="0">Ground</option>
@@ -740,6 +772,7 @@ export default function PostPropertyPage() {
                   value={formData.totalFloors}
                   onChange={(e) => handleInputChange("totalFloors", e.target.value)}
                   className="border-b border-gray-300 w-full p-2"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="" disabled>Total</option>
                   <option value="1">1</option>
@@ -761,6 +794,7 @@ export default function PostPropertyPage() {
                 value={formData.fullAddress}
                 onChange={(e) => handleInputChange("fullAddress", e.target.value)}
                 required
+                disabled={!isFormEnabled} // Disable when form is not enabled
               />
               <span></span>
               <label>Address</label>
@@ -772,6 +806,7 @@ export default function PostPropertyPage() {
                   value={formData.city}
                   onChange={(e) => handleInputChange("city", e.target.value)}
                   required
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 >
                   <option value="" disabled>Select City</option>
                   {cities.map((city) => (
@@ -787,7 +822,7 @@ export default function PostPropertyPage() {
                   value={formData.locality}
                   onChange={(e) => handleInputChange("locality", e.target.value)}
                   required
-                  disabled={!selectedCity}
+                  disabled={!selectedCity || !isFormEnabled} // Disable when city is not selected or form is not enabled
                 >
                   <option value="" disabled>
                     {selectedCity ? "Select Locality" : "Select City First"}
@@ -808,6 +843,7 @@ export default function PostPropertyPage() {
                   type="text"
                   value={formData.youtubeLink}
                   onChange={(e) => handleInputChange("youtubeLink", e.target.value)}
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 />
                 <span></span>
                 <label>YouTube Link</label>
@@ -818,6 +854,7 @@ export default function PostPropertyPage() {
                   type="text"
                   value={formData.tourLink}
                   onChange={(e) => handleInputChange("tourLink", e.target.value)}
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 />
                 <span></span>
                 <label>3D Tour Link</label>
@@ -830,6 +867,7 @@ export default function PostPropertyPage() {
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
                 placeholder="Describe your property features, amenities, nearby facilities..."
+                disabled={!isFormEnabled} // Disable when form is not enabled
               ></textarea>
             </div>
             
@@ -846,6 +884,7 @@ export default function PostPropertyPage() {
                       value="owner"
                       checked={formData.youAre === "owner"}
                       onChange={(e) => handleInputChange("youAre", e.target.value)}
+                      disabled={!isFormEnabled} // Disable when form is not enabled
                     />
                     <label htmlFor="owner">Owner</label>
                   </div>
@@ -857,6 +896,7 @@ export default function PostPropertyPage() {
                       value="agent"
                       checked={formData.youAre === "agent"}
                       onChange={(e) => handleInputChange("youAre", e.target.value)}
+                      disabled={!isFormEnabled} // Disable when form is not enabled
                     />
                     <label htmlFor="agent">Agent</label>
                   </div>
@@ -868,6 +908,7 @@ export default function PostPropertyPage() {
                       value="builder"
                       checked={formData.youAre === "builder"}
                       onChange={(e) => handleInputChange("youAre", e.target.value)}
+                      disabled={!isFormEnabled} // Disable when form is not enabled
                     />
                     <label htmlFor="builder">Builder</label>
                   </div>
@@ -879,6 +920,7 @@ export default function PostPropertyPage() {
                   value={formData.contactPersonName}
                   onChange={(e) => handleInputChange("contactPersonName", e.target.value)}
                   required
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 />
                 <span></span>
                 <label>Contact Person Name</label>
@@ -890,6 +932,7 @@ export default function PostPropertyPage() {
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 required
+                disabled={!isFormEnabled} // Disable when form is not enabled
               />
               <span></span>
               <label>Email Address</label>
@@ -899,7 +942,10 @@ export default function PostPropertyPage() {
               <h3 className="mb-2">Your WhatsApp Number</h3>
               <div className="flex">
                 <div className="w-1/5 min-w-[90px] max-w-[100px]">
-                  <select className="phone-select rounded-l-lg w-full">
+                  <select 
+                    className="phone-select rounded-l-lg w-full"
+                    disabled={!isFormEnabled} // Disable when form is not enabled
+                  >
                     <option value="IN">🇮🇳 +91</option>
                     <option value="US">🇺🇸 +1</option>
                     <option value="UK">🇬🇧 +44</option>
@@ -912,6 +958,7 @@ export default function PostPropertyPage() {
                   value={formData.whatsapp}
                   onChange={(e) => handleInputChange("whatsapp", e.target.value)}
                   required
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 />
               </div>
             </div>
@@ -919,7 +966,7 @@ export default function PostPropertyPage() {
           </div>
 
           {/* Photos */}
-          <div className="form-section">
+          <div className={`form-section ${!isFormEnabled ? "opacity-50 pointer-events-none" : ""}`}>
             <h2 className="section-title">
               Photos
             </h2>
@@ -956,7 +1003,7 @@ export default function PostPropertyPage() {
                     onClick={handleCameraCapture}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                     title={isMobile ? "Take photo with camera" : "Use computer camera"}
-                    disabled={formData.photos.length >= MAX_PHOTOS} // Disable if max photos reached
+                    disabled={!isFormEnabled || formData.photos.length >= MAX_PHOTOS} // Disable if form not enabled or max photos reached
                   >
                     <Camera className="w-4 h-4" />
                     {isMobile ? 'Camera' : 'Use Camera'}
@@ -965,7 +1012,7 @@ export default function PostPropertyPage() {
                     type="button"
                     onClick={handleGallerySelect}
                     className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                    disabled={formData.photos.length >= MAX_PHOTOS} // Disable if max photos reached
+                    disabled={!isFormEnabled || formData.photos.length >= MAX_PHOTOS} // Disable if form not enabled or max photos reached
                   >
                     <Image className="w-4 h-4" />
                     Gallery
@@ -979,6 +1026,7 @@ export default function PostPropertyPage() {
                   onChange={handlePhotoUpload}
                   id="photo-upload"
                   className="hidden"
+                  disabled={!isFormEnabled} // Disable when form is not enabled
                 />
               </div>
               
@@ -998,6 +1046,7 @@ export default function PostPropertyPage() {
                             type="button"
                             onClick={() => removePhoto(index)}
                             className="opacity-0 group-hover:opacity-100 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-all"
+                            disabled={!isFormEnabled} // Disable when form is not enabled
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1029,8 +1078,8 @@ export default function PostPropertyPage() {
           <div className="text-center">
             <button
               type="submit"
-              className="submit-btn"
-              disabled={isSubmitting}
+              className={`submit-btn ${!isFormEnabled ? "opacity-50 pointer-events-none" : ""}`}
+              disabled={!isFormEnabled || isSubmitting} // Disable when form is not enabled or submitting
             >
               {isSubmitting ? "Saving..." : "Login & Post Property"}
             </button>
