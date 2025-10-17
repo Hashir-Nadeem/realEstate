@@ -6,7 +6,7 @@ interface MapSelectorProps {
   onLocationSelect: (location: { lat: number; lng: number }) => void
   userLocation?: { lat: number; lng: number; accuracy?: number } | null
 }
-
+ 
 declare global {
   interface Window {
     L: any
