@@ -3,10 +3,10 @@ import Link from 'next/link'
 
 export const Footer = () => {
   return (
-    <footer className="bg-green-900 text-white py-8 px-4">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between">
+    <footer className="bg-gray-900 text-white py-8 px-4">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-between">
         {/* Left side - Logo */}
-        <div className="flex items-center mb-6 md:mb-0">
+        <div className="flex items-center mb-6 md:mb-0 md:w-1/3">
           <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
             <Image
               src="/placeholder-logo.png"
@@ -16,14 +16,18 @@ export const Footer = () => {
               className="object-contain"
             />
           </div>
+          <div className="ml-4">
+            <h3 className="text-lg font-semibold">Real Estate</h3>
+            <p className="text-sm text-gray-400">Find your dream property</p>
+          </div>
         </div>
 
         {/* Center - Follow Us text */}
-        <div className="flex flex-col items-center mb-6 md:mb-0">
+        <div className="flex flex-col items-center mb-6 md:mb-0 md:w-1/3">
           <span className="text-lg font-medium mb-3">Follow Us</span>
           
           {/* Social Media Icons */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 justify-center">
             {/* Facebook */}
             <Link href="#" className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -61,8 +65,20 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Empty div for spacing */}
-        <div className="hidden md:block w-12 h-12"></div>
+        {/* Right side - Copyright */}
+        <div className="text-center md:text-right md:w-1/3">
+          <p className="text-sm text-gray-400">
+            © 2024 Real Estate. All rights reserved.
+          </p>
+          <div className="flex gap-4 mt-2 text-xs text-gray-500 justify-center md:justify-end">
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   )

@@ -113,11 +113,9 @@ export const generatePropertyPopupContent = (property: Property, options: PopupO
     </div>`
 
   const popupContent = `
-    <div style="position:relative;">
+    <div style="position:relative; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width:100%; width:90vw; border-radius:8px; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); background:white;">
       ${closeBtn}
-      <div onclick="window.propertyDetailsHandler('${property.id}')" style="width:400px; cursor:pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-        ${shareContainer}
-        
+      <div onclick="window.propertyDetailsHandler('${property.id}')" style="cursor:pointer;">
         <!-- Image Section -->
         <div style="position:relative; width:100%; height:160px; overflow:hidden;">
           <img src="${img}" alt="${property.title}" style="width:100%; height:100%; object-fit:cover; display:block;"/>
@@ -126,7 +124,7 @@ export const generatePropertyPopupContent = (property: Property, options: PopupO
         </div>
         
         <!-- Content Section -->
-        <div style="padding:12px 16px 16px 16px;">
+        <div style="padding:12px 16px;">
           <!-- Row 1: Property Type and Status -->
           <div style="margin-bottom:6px;">
             <span style="color:#333; font-size:14px; font-weight:600; line-height:1.3; display:block;">
@@ -139,17 +137,17 @@ export const generatePropertyPopupContent = (property: Property, options: PopupO
             <span style="color:#000; font-size:18px; font-weight:700; display:block;">${property.price}</span>
           </div>
           
-          <!-- Row 3: Details with icons - Flexible wrap layout -->
-          <div style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-not oottom:8px; font-size:12px; color:#666;">
+          <!-- Row 3: Details with icons -->
+          <div style="display:flex; flex-wrap:wrap; gap:8px 12px; margin-bottom:8px; font-size:12px; color:#666;">
             <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2L22 22H2L12 2z"/>
                 <path d="M12 8v6"/>
                 <path d="M8 18h8"/>
               </svg>
-              <span style="white-space:nowrap;">${areaDisplay}</span>
+              <span>${areaDisplay}</span>
             </div>
-            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/>
                 <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/>
@@ -158,15 +156,15 @@ export const generatePropertyPopupContent = (property: Property, options: PopupO
                 <path d="M7 18h2"/>
                 <path d="M15 18h2"/>
               </svg>
-              <span style="white-space:nowrap;">${beds} Beds</span>
+              <span>${beds} Beds</span>
             </div>
-            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h5m0-7v7m0-7h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-5m0-7V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2Z"/>
+                <path d="M9 11H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h5m0-7v7m0-7h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-5m0-7V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 1-2-2Z"/>
               </svg>
-              <span style="white-space:nowrap;">${baths} Baths</span>
+              <span>${baths} Baths</span>
             </div>
-            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
@@ -179,16 +177,16 @@ export const generatePropertyPopupContent = (property: Property, options: PopupO
                 <path d="M6.34 17.66l-1.41 1.41"/>
                 <path d="M19.07 4.93l-1.41 1.41"/>
               </svg>
-              <span style="white-space:nowrap;">${facing}</span>
+              <span>${facing}</span>
             </div>
             ${floorNumber !== '' && totalFloors !== '' ? `
-              <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
+              <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 21h18"/>
                   <path d="M5 21V7l8-4v18"/>
                   <path d="M19 21V11l-6-4"/>
                 </svg>
-                <span style="white-space:nowrap;">${floorNumber === '0' ? 'Ground' : floorNumber} of ${totalFloors} Floors</span>
+                <span>${floorNumber === '0' ? 'Ground' : floorNumber} of ${totalFloors} Floors</span>
               </div>
             ` : ''}
           </div>

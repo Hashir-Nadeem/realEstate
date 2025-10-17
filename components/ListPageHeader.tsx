@@ -60,21 +60,21 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
   ]
 
   return (
-    <header className="sticky top-0 z-20 bg-red-600 shadow-md p-3">
-      <div className="container mx-auto flex items-center gap-4">
+    <header className="sticky top-0 z-20 bg-white shadow-md p-3 w-full">
+      <div className="container mx-auto flex flex-wrap items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
           <Image 
-              src="/placeholder-logo.png" alt="Laksmiland Logo" width={150} height={40} className="object-contain" />
+              src="/placeholder-logo.png" alt="Laksmiland Logo" width={120} height={32} className="object-contain" />
         </Link>
 
         {/* Search and Filters */}
-        <div className="flex-grow flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+        <div className="flex-grow flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-lg">
           {/* City Dropdown */}
           <select
             value={city}
             onChange={handleCitySelection}
-            className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-auto"
           >
             {cities.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -83,7 +83,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
           <select
             value={locality}
             onChange={(e) => onLocalityChange(e.target.value)}
-            className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-auto"
             disabled={availableLocalities.length === 0}
           >
             <option value="All">All Localities</option>
@@ -93,7 +93,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
           {/* Filter Popover */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="flex-shrink-0">
+              <Button variant="outline" className="flex-shrink-0 w-full sm:w-auto">
                 <Filter className="w-4 h-4 mr-2" />
                 Filter
               </Button>
@@ -134,7 +134,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
 
         {/* Post Property Button */}
         <Link href="/" passHref>
-          <Button className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0 whitespace-nowrap">
+          <Button className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0 whitespace-nowrap w-full sm:w-auto">
             Post Property <span className="ml-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-sm">FREE</span>
           </Button>
         </Link>

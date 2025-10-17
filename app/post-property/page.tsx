@@ -480,9 +480,9 @@ export default function PostPropertyPage() {
   }
 
   return (
-    <div className="property-page-container">
+    <div className="property-page-container relative flex min-h-screen flex-col">
       {/* Static Background Image */}
-      <div className="fixed inset-0 z-0">
+      <div className="pointer-events-none fixed inset-0 -z-10">
         <div 
           className="w-full h-full bg-cover bg-center bg-no-repeat"
           style={{
@@ -494,17 +494,17 @@ export default function PostPropertyPage() {
       </div>
 
       {/* Header - Fixed at top */}
-      <div className="relative z-10 bg-white/95 backdrop-blur-sm border-b px-4 py-3 flex items-center shadow-sm">
+      <header className="relative z-10 bg-white/95 backdrop-blur-sm border-b px-4 py-3 flex items-center shadow-sm shrink-0">
         <Link href="/">
           <button className="mr-3 mt-2 bg-transparent border-0">
             <ArrowLeft className="w-5 h-5" />
           </button>
         </Link>
         <h1 className="text-xl text-black">Post property Ad for Free!</h1>
-      </div>
+      </header>
 
       {/* Scrollable Form Container */}
-      <div className="relative z-10 flex-1 overflow-y-auto">
+      <main className="relative z-10 flex-1 overflow-y-auto">
         <div className="property-form-container">
           <form onSubmit={handleSubmit}>
           {/* Location Selector */}
@@ -1136,11 +1136,10 @@ export default function PostPropertyPage() {
           </div>
         </form>
       </div>
+      </main>
 
-      {/* Footer - Fixed at bottom
-      <div className="relative z-10">
-        <Footer />
-      </div> */}
+      
+
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;500&family=Poppins:wght@100;200;300;400&display=swap');
 
@@ -1150,7 +1149,6 @@ export default function PostPropertyPage() {
           min-height: 100vh;
           display: flex;
           flex-direction: column;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .property-form-container {
@@ -1537,7 +1535,6 @@ export default function PostPropertyPage() {
           }
         }
       `}</style>
-    </div>
     </div>
   )
 }
