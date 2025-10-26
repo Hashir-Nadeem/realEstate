@@ -40,6 +40,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showCityDropdown, setShowCityDropdown] = useState(false)
   const [initialLocationSet, setInitialLocationSet] = useState(false)
+  const [isRecentering, setIsRecentering] = useState(false)
 
   const { 
     userLocation, 
@@ -91,28 +92,24 @@ export default function HomePage() {
 
   const handleRecenterToUserLocation = async () => {
     console.log('HomePage: Recentering to user location')
+    setIsRecentering(true)
     try {
       await getCurrentLocation(false)
       handleShowCurrentLocation()
       setSearchQuery("")
       console.log('HomePage: Recenter complete, should be viewing current location')
+      // Keep recentering state for a bit longer to prevent flickering
+      setTimeout(() => setIsRecentering(false), 1000)
     } catch (error) {
       console.error("Error getting location:", error)
-    }
-  }
-
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value)
-    setShowCityDropdown(true)
-    
-    // If user clears the search, show current location
-    if (value === "") {
-      console.log('Search cleared, showing current location')
-      handleShowCurrentLocation()
+      setIsRecentering(false)
     }
   }
 
   const handleMapViewChange = (viewingCurrentLocation: boolean) => {
+    // Ignore view changes during recentering to prevent flickering
+    if (isRecentering) return;
+    
     // Only update if the state is actually different
     if (viewingCurrentLocation !== isViewingCurrentLocation) {
       console.log('🔥 HomePage: Map view change callback triggered!');
@@ -129,6 +126,30 @@ export default function HomePage() {
     console.log('HomePage: User location:', userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'none');
   }, [isViewingCurrentLocation, selectedCity, userLocation])
 
+  function handleSearchChange(value: string): void {
+    setSearchQuery(value)
+
+    const trimmed = value.trim()
+    if (!trimmed) {
+      setShowCityDropdown(false)
+      return
+    }
+
+    // show dropdown when there's something typed
+    setShowCityDropdown(true)
+
+    // If the user typed an exact city name, select it immediately
+    const exactMatch = cities.find(
+      (c) => c.name.toLowerCase() === trimmed.toLowerCase()
+    )
+
+    if (exactMatch) {
+      console.log("handleSearchChange: exact city match:", exactMatch.name)
+      handleCitySelect(exactMatch)
+      setSearchQuery(exactMatch.name)
+      setShowCityDropdown(false)
+    }
+  }
   return (
     <div className="h-screen flex flex-col bg-white">
       {/* Header with Search */}
@@ -192,32 +213,14 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Location Accuracy Display */}
-        {userLocation?.accuracy && userLocation.accuracy < 200 && (
-          <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-xs text-green-800">
-              Location accuracy: ±{Math.round(userLocation.accuracy)}m
-              {userLocation.accuracy < 50 && " (Excellent)"}
-              {userLocation.accuracy >= 50 && userLocation.accuracy < 100 && " (Good)"}
-              {userLocation.accuracy >= 100 && " (Fair)"}
-            </p>
-          </div>
-        )}
+        {/* Location Accuracy Display removed for home/search page */}
 
-        {/* Post Property CTA - Add more debug info */}
+        {/* Post Property CTA */}
         <div className="mb-2">
-          {/* {process.env.NODE_ENV === 'development' && (
-            <div className="text-xs text-gray-500 mb-1 space-y-1">
-              <div>🔍 Debug: isViewingCurrentLocation = {isViewingCurrentLocation.toString()}</div>
-              <div>📍 Debug: selectedCity = {selectedCity?.name || 'null'}</div>
-              <div>🌍 Debug: userLocation = {userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'null'}</div>
-              <div>🔄 Debug: Button should show: {isViewingCurrentLocation ? 'POST PROPERTY' : 'SHOW CURRENT LOCATION'}</div>
-            </div>
-          )} */}
           <PostPropertyButton
             isViewingCurrentLocation={isViewingCurrentLocation}
             onShowCurrentLocation={handleRecenterToUserLocation}
-            isLocating={isLocating}
+            isLocating={isLocating || isRecentering}
           />
         </div>
       </div>

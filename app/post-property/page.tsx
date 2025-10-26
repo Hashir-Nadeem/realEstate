@@ -37,7 +37,7 @@ export default function PostPropertyPage() {
     setIsViewingCurrentLocation,
   } = useMapViewState(userLocation)
 
-  // Use city-locality hook
+  // Use city-locality hook with auto-selection of nearest city
   const {
     selectedCity,
     selectedLocality,
@@ -45,7 +45,10 @@ export default function PostPropertyPage() {
     cities,
     handleCityChange,
     handleLocalityChange,
-  } = useCityLocality()
+  } = useCityLocality({ 
+    userLocation, 
+    autoSetNearestCity: true 
+  })
 
   const [isPropertyTypeOpen, setIsPropertyTypeOpen] = useState(false)
   const propertyTypeRef = useRef<HTMLDivElement>(null)
@@ -469,6 +472,17 @@ export default function PostPropertyPage() {
     }
   }, [])
 
+  // Sync form data when city is auto-selected based on user location
+  useEffect(() => {
+    if (selectedCity && selectedCity !== formData.city) {
+      setFormData(prev => ({
+        ...prev,
+        city: selectedCity,
+        locality: '' // Reset locality when city changes
+      }))
+    }
+  }, [selectedCity, formData.city])
+
   const handleEnableForm = (enable: boolean) => {
     setIsFormEnabled(enable)
     if (enable) {
@@ -626,11 +640,11 @@ export default function PostPropertyPage() {
             {/* Custom Property Type Dropdown */}
             <div className={`select-box ${!isFormEnabled ? "opacity-50 pointer-events-none" : ""}`} ref={propertyTypeRef}>
               <div 
-                className={`custom-dropdown-header border-b border-gray-300 py-2 px-1 flex justify-between items-center cursor-pointer selected`}
+                className={`custom-dropdown-header border-b border-gray-300 py-2 px-1 flex justify-between items-center cursor-pointer ${formData.propertyCategory ? "selected" : ""}`}
                 onClick={() => isFormEnabled && setIsPropertyTypeOpen(!isPropertyTypeOpen)}
               >
-                <div className="flex flex-col text-sm">
-                  <span className={`${formData.propertyCategory ? "text-black" : "text-gray-400"} mt-1`}>
+                <div className="flex flex-col">
+                  <span className={`text-sm ${formData.propertyCategory ? "text-blue-600 font-medium" : "text-gray-500"} transition-colors`}>
                     {getSelectedPropertyTypeLabel() || "Select Property Type"}
                   </span>
                 </div>
@@ -644,16 +658,16 @@ export default function PostPropertyPage() {
               <div className={`options-container ${isPropertyTypeOpen ? 'active' : ''}`}>
                 {Object.entries(propertyTypes).map(([category, options]) => (
                   <div key={category} className="dropdown-category">
-                    <div className="text-sm py-2 px-4 bg-gray-500 text-white font-medium">
+                    <div className="text-sm category-header">
                       {category}
                     </div>
                     {options.map(option => (
                       <div 
                         key={option.value}
-                        className="option py-3 text-sm px-4 hover:bg-gray-100 bg-white cursor-pointer"
+                        className="option cursor-pointer"
                         onClick={() => isFormEnabled && handlePropertyTypeSelect(option.value)}
                       >
-                        <label>{option.label}</label>
+                        <label className="cursor-pointer w-full block">{option.label}</label>
                       </div>
                     ))}
                   </div>
@@ -1410,18 +1424,23 @@ export default function PostPropertyPage() {
           position: relative;
           width: 100%;
           margin: 30px 0;
+          z-index: 100;
         }
 
         .custom-dropdown-header {
           background-color: rgba(255, 255, 255, 0.95) !important;
           border-bottom: 1px solid black !important;
-          padding-bottom: 8px !important;
+          padding: 12px 5px 8px 5px !important;
           margin-bottom: 0 !important;
           border-radius: 0;
         }
+        
+        .custom-dropdown-header.selected {
+          color: #2691d9 !important;
+        }
 
         .options-container {
-          background: rgba(228, 230, 230, 0.98);
+          background: #f0f0f0;
           color: #1b1b1b;
           max-height: 0;
           width: 100%;
@@ -1432,35 +1451,62 @@ export default function PostPropertyPage() {
           order: 1;
           margin-top: -1px;
           box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          border: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .options-container.active {
           position: absolute !important;
           z-index: 1000 !important;
-          max-height: 240px !important;
+          max-height: 320px !important;
           opacity: 1 !important;
           overflow-y: auto !important;
+          width: 100% !important;
+          top: 100% !important;
+          left: 0 !important;
         }
 
         .option {
-          background-color: rgba(255, 255, 255, 0.95) !important;
-          color: #111827 !important;
+          background-color: #ffffff !important;
+          color: #374151 !important;
           padding: 12px 16px !important;
-          border-bottom: 1px solid rgba(243, 244, 246, 0.6) !important;
+          border-bottom: none !important;
           transition: background-color 0.2s ease !important;
+          font-size: 16px !important;
         }
 
         .option:active,
         .option:hover {
-          background-color: rgba(239, 246, 255, 0.95) !important;
+          background-color: #f3f4f6 !important;
         }
 
+        .dropdown-category .category-header,
         .dropdown-category .text-sm {
-          background-color: rgba(107, 114, 128, 0.95) !important;
+          background-color: #9ca3af !important;
           color: white !important;
-          font-weight: 500 !important;
-          padding: 8px 16px !important;
+          font-weight: 600 !important;
+          padding: 12px 16px !important;
+          text-transform: uppercase !important;
+          font-size: 14px !important;
+          letter-spacing: 0.5px !important;
+        }
+
+        /* Custom scrollbar for dropdown */
+        .options-container::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .options-container::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+
+        .options-container::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 3px;
+        }
+
+        .options-container::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8;
         }
 
         /* Enhanced visual elements */

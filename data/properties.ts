@@ -5,15 +5,15 @@ export const propertyData = [
     id: 2,
     lat: 12.9698,
     lng: 77.75,
-    type: "sale-luxury", // Luxury sale property - Purple
+    type: "sale-farmland", // Farmland sale property - Green
     price: "₹1.2Cr",
-    title: "3BHK Villa in Whitefield",
-    area: "1800 sq ft",
+    title: "3 Acre Agricultural Land in Whitefield",
+    area: "3 acres",
     city: "Bangalore",
-    imageUrl: "https://images.unsplash.com/photo-1560185127-6c4b1f1c1e9c?q=80&w=1600&auto=format&fit=crop",
-    beds: 3,
-    baths: 3,
-    sqft: 1800,
+    imageUrl: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1600&auto=format&fit=crop",
+    beds: 0,
+    baths: 0,
+    sqft: 130680, // 3 acres in sqft
     address: "Whitefield, Bangalore, Karnataka",
     has3DTour: true,
   },
@@ -27,6 +27,10 @@ export const propertyData = [
     area: "1200 sq ft",
     city: "Bangalore",
     imageUrl: "https://images.unsplash.com/photo-1598928506312-d2a3b6f3c6b2?q=80&w=1600&auto=format&fit=crop",
+    images: [
+      "https://images.unsplash.com/photo-1598928506312-d2a3b6f3c6b2?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=1600&auto=format&fit=crop"
+    ],
     beds: 2,
     baths: 2,
     sqft: 1200,
@@ -43,6 +47,11 @@ export const propertyData = [
     area: "2500 sq ft",
     city: "Bangalore",
     imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop",
+    images: [
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?q=80&w=1600&auto=format&fit=crop"
+    ],
     beds: 0,
     baths: 4,
     sqft: 2500,
@@ -77,6 +86,10 @@ export const propertyData = [
     area: "1600 sq ft",
     city: "Chennai",
     imageUrl: "https://images.unsplash.com/photo-1599423300746-b62533397364?q=80&w=1600&auto=format&fit=crop",
+    images: [
+      "https://images.unsplash.com/photo-1599423300746-b62533397364?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1600&auto=format&fit=crop"
+    ],
     beds: 3,
     baths: 3,
     sqft: 1600,
@@ -95,6 +108,11 @@ export const propertyData = [
     area: "650 sq ft",
     city: "Mumbai",
     imageUrl: "https://images.unsplash.com/photo-1597047084897-51e81819a499?q=80&w=1600&auto=format&fit=crop",
+    images: [
+      "https://images.unsplash.com/photo-1597047084897-51e81819a499?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop"
+    ],
     beds: 1,
     baths: 1,
     sqft: 650,
@@ -105,15 +123,15 @@ export const propertyData = [
     id: 9,
     lat: 19.033,
     lng: 72.8697,
-    type: "sale-luxury", // Luxury sale property - Purple
+    type: "sale-farmland", // Farmland sale property - Green
     price: "₹2.8Cr",
-    title: "2BHK Luxury Apartment in Lower Parel",
-    area: "900 sq ft",
+    title: "2 Acre Farm Land in Lower Parel",
+    area: "2 acres",
     city: "Mumbai",
-    imageUrl: "https://images.unsplash.com/photo-1599423300746-b62533397364?q=80&w=1600&auto=format&fit=crop",
-    beds: 2,
-    baths: 2,
-    sqft: 900,
+    imageUrl: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?q=80&w=1600&auto=format&fit=crop",
+    beds: 0,
+    baths: 0,
+    sqft: 87120, // 2 acres in sqft
     address: "Lower Parel, Mumbai, Maharashtra",
     has3DTour: true,
   },
@@ -161,6 +179,10 @@ export const propertyData = [
     area: "2200 sqft",
     city: "New Delhi",
     imageUrl: "https://images.unsplash.com/photo-1502673530728-f79b4cab31b1?q=80&w=1600&auto=format&fit=crop",
+    images: [
+      "https://images.unsplash.com/photo-1502673530728-f79b4cab31b1?q=80&w=1600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1600&auto=format&fit=crop"
+    ],
     beds: 4,
     baths: 3,
     sqft: 2200,
@@ -179,15 +201,15 @@ export const propertyData = [
     id: 14,
     lat: 17.385,
     lng: 78.4867,
-    type: "sale-luxury", // Luxury sale property - Purple
+    type: "sale-farmland", // Farmland sale property - Green
     price: "₹75L",
-    title: "2BHK Luxury Villa in Banjara Hills",
-    area: "1300 sq ft",
+    title: "1.5 Acre Agricultural Land in Banjara Hills",
+    area: "1.5 acres",
     city: "Hyderabad",
-    imageUrl: "https://images.unsplash.com/photo-1599423300746-b62533397364?q=80&w=1600&auto=format&fit=crop",
-    beds: 2,
-    baths: 2,
-    sqft: 1300,
+    imageUrl: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?q=80&w=1600&auto=format&fit=crop",
+    beds: 0,
+    baths: 0,
+    sqft: 65340, // 1.5 acres in sqft
     address: "Banjara Hills, Hyderabad, Telangana",
     has3DTour: true,
   },

@@ -5,28 +5,27 @@ export const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white py-8 px-4">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-between">
+        
         {/* Left side - Logo */}
-        <div className="flex items-center mb-6 md:mb-0 md:w-1/3">
-          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+        <div className="flex items-center mb-6 md:mb-0 md:w-1/3 relative">
+          <div className="w-20 h-20 relative flex items-center justify-center overflow-visible">
             <Image
-              src="/placeholder-logo.png"
+              src="/zamindar_logo_transparent.png"
               alt="Logo"
-              width={32}
-              height={32}
-              className="object-contain"
+              width={100}
+              height={100}
+              className="object-contain scale-[1.8]"
             />
           </div>
           <div className="ml-4">
-            <h3 className="text-lg font-semibold">Real Estate</h3>
+            <h3 className="text-lg font-semibold">Zamindar</h3>
             <p className="text-sm text-gray-400">Find your dream property</p>
           </div>
         </div>
 
-        {/* Center - Follow Us text */}
+        {/* Center - Follow Us */}
         <div className="flex flex-col items-center mb-6 md:mb-0 md:w-1/3">
           <span className="text-lg font-medium mb-3">Follow Us</span>
-          
-          {/* Social Media Icons */}
           <div className="flex gap-4 justify-center">
             {/* Facebook */}
             <Link href="#" className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors">
@@ -68,7 +67,7 @@ export const Footer = () => {
         {/* Right side - Copyright */}
         <div className="text-center md:text-right md:w-1/3">
           <p className="text-sm text-gray-400">
-            © 2024 Real Estate. All rights reserved.
+            © 2024 Zamindar. All rights reserved.
           </p>
           <div className="flex gap-4 mt-2 text-xs text-gray-500 justify-center md:justify-end">
             <Link href="/privacy" className="hover:text-white transition-colors">
@@ -79,7 +78,9 @@ export const Footer = () => {
             </Link>
           </div>
         </div>
+
       </div>
+      
     </footer>
   )
 }

@@ -89,3 +89,32 @@
     font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   }
 }
+
+/* Search dropdown z-index fix */
+.search-dropdown,
+.search-recommendations,
+.search-results {
+  z-index: 9999 !important;
+  position: relative;
+}
+
+/* Ensure search container has proper stacking context */
+.search-container {
+  z-index: 9999;
+  position: relative;
+}
+
+/* Map container should have lower z-index */
+.map-container {
+  z-index: 1;
+  position: relative;
+}
+
+/* Leaflet map specific fixes */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.leaflet-control-container {
+  z-index: 10 !important;
+}

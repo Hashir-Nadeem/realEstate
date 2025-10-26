@@ -55,8 +55,8 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
 
   const propertyTypes = [
     { id: "sale-residential", label: "Residential" },
-    { id: "sale-luxury", label: "Luxury" },
     { id: "sale-commercial", label: "Commercial" },
+    { id: "sale-farmland", label: "Farmland" },
   ]
 
   return (
@@ -65,7 +65,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
           <Image 
-              src="/placeholder-logo.png" alt="Laksmiland Logo" width={120} height={32} className="object-contain" />
+              src="/zamindar_logo_transparent.png" alt="Zamindar.ai Logo" width={120} height={32} className="object-contain" />
         </Link>
 
         {/* Search and Filters */}

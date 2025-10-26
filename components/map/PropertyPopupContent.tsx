@@ -159,33 +159,16 @@ export const generatePropertyPopupContent = (property: Property, options: PopupO
               <span>${beds} Beds</span>
             </div>
             <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h5m0-7v7m0-7h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-5m0-7V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 1-2-2Z"/>
-              </svg>
+              <img src="/icons/bath.png" width="14" height="14" style="object-fit:contain" alt="Bathroom"/>
               <span>${baths} Baths</span>
             </div>
             <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 6v6l4 2"/>
-                <path d="M12 2v2"/>
-                <path d="M12 20v2"/>
-                <path d="M4.93 4.93l1.41 1.41"/>
-                <path d="M17.66 17.66l1.41 1.41"/>
-                <path d="M2 12h2"/>
-                <path d="M20 12h2"/>
-                <path d="M6.34 17.66l-1.41 1.41"/>
-                <path d="M19.07 4.93l-1.41 1.41"/>
-              </svg>
+              <img src="/icons/balcony.png" width="14" height="14" style="object-fit:contain" alt="Facing"/>
               <span>${facing}</span>
             </div>
             ${floorNumber !== '' && totalFloors !== '' ? `
               <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 21h18"/>
-                  <path d="M5 21V7l8-4v18"/>
-                  <path d="M19 21V11l-6-4"/>
-                </svg>
+                <img src="/icons/balcony.png" width="14" height="14" style="object-fit:contain" alt="Floors"/>
                 <span>${floorNumber === '0' ? 'Ground' : floorNumber} of ${totalFloors} Floors</span>
               </div>
             ` : ''}

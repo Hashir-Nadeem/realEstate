@@ -8,9 +8,14 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 export const metadata: Metadata = {
-  title: 'Real Estate - Find Your Dream Property',
+  title: 'Zamindar - Find Your Dream Property',
   description: 'Find and post properties for sale and rent. Connect with buyers and sellers.',
-  generator: 'Real Estate App',
+  generator: 'Zamindar App',
+  icons: {
+    icon: '/zamindar_logo_transparent.png',
+    shortcut: '/zamindar_logo_transparent.png',
+    apple: '/zamindar_logo_transparent.png',
+  },
 }
 
 export default function RootLayout({

@@ -89,7 +89,7 @@ export async function GET() {
             id: Number(id) || `csv-${Date.now()}-${idx}`,
             lat: parseFloat(lat) || undefined,
             lng: parseFloat(lng) || undefined,
-            type: youAreHereTo === "sell" ? "sale-residential" : "rental", // Default to residential for sale
+            type: youAreHereTo === "sell" ? "sale-residential" : "rental", // Default all sale submissions to residential type
             price: formattedPrice,
             title: title || (fullAddress || "Submitted Property"),
             area: area && areaUnit ? `${area} ${areaUnit === 'sqft' ? 'sqft' : areaUnit === 'sqyard' ? 'sq yard' : areaUnit === 'sqmeter' ? 'sq meter' : areaUnit === 'acres' ? 'acres' : areaUnit}` : "",

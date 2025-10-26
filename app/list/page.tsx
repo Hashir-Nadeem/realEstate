@@ -2,10 +2,19 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { Search, List, HelpCircle, Settings } from "lucide-react"
 import { generatePropertyPopupContent } from "@/components/map/PropertyPopupContent"
 import { ListPageHeader } from "@/components/ListPageHeader"
 
+const tabs = [
+  { name: "Search", icon: Search },
+  { name: "List", icon: List },
+  { name: "Help", icon: HelpCircle },
+  { name: "Services", icon: Settings },
+]
+
 export default function ListPage() {
+  const [selectedTab, setSelectedTab] = useState("List")
   const [properties, setProperties] = useState<any[]>([])
   const [filteredProperties, setFilteredProperties] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -54,7 +63,8 @@ export default function ListPage() {
       }
     }
 
-    // Filter by property type (for sale properties)
+    // Filter by property type (
+    // r sale properties)
     if (saleRentFilter === "sale" && propertyTypeFilter.length > 0) {
       result = result.filter(p => propertyTypeFilter.includes(p.type))
     }
@@ -98,6 +108,38 @@ export default function ListPage() {
           </div>
         )}
       </main>
+
+      {/* Bottom Navigation */}
+      <div className="bg-white border-t border-gray-200 px-4 py-2">
+        <div className="flex justify-around">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            const isActive = selectedTab === tab.name
+
+            if (tab.name === "Search") {
+              return (
+                <Link href="/" key={tab.name} className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-600 hover:text-gray-800 transition-colors">
+                  <Icon className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">{tab.name}</span>
+                </Link>
+              )
+            }
+
+            return (
+              <button
+                key={tab.name}
+                onClick={() => setSelectedTab(tab.name)}
+                className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+                  isActive ? "text-blue-600 bg-blue-50" : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <Icon className="w-6 h-6 mb-1" />
+                <span className="text-xs font-medium">{tab.name}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

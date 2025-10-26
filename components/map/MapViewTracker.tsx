@@ -14,9 +14,9 @@ export const MapViewTracker: React.FC<MapViewTrackerProps> = ({
   onViewChange,
 }) => {
   const lastViewState = useRef<boolean | null>(null);
-  const checkTimeoutRef = useRef<NodeJS.Timeout>();
   const attachRetryRef = useRef<NodeJS.Timeout>();
   const detachFnRef = useRef<null | (() => void)>(null);
+  const checkTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     let cancelled = false;
@@ -49,29 +49,25 @@ export const MapViewTracker: React.FC<MapViewTrackerProps> = ({
         }
       };
 
-      const immediateCheck = () => {
-        checkViewState();
-      };
-
-      const debouncedCheck = () => {
+      // Throttled check to prevent excessive calls during rapid map movements
+      const throttledCheck = () => {
         if (checkTimeoutRef.current) {
           clearTimeout(checkTimeoutRef.current);
         }
-        checkTimeoutRef.current = setTimeout(checkViewState, 50);
+        checkTimeoutRef.current = setTimeout(checkViewState, 50); // Use a small throttle
       };
 
-      // Set initial state after map is ready (will fire immediately if already ready)
+      // Set initial state after map is ready
       map.whenReady(() => {
         setTimeout(() => {
           lastViewState.current = null; // Reset to force initial check
           checkViewState();
-        }, 100);
+        }, 150); // Small delay for map to settle
       });
 
-      // Use immediate check for move events for responsiveness
-      map.on('move', immediateCheck);
-      map.on('moveend', debouncedCheck);
-      map.on('zoomend', debouncedCheck);
+      // Use throttled checks for move and zoom events
+      map.on('move', throttledCheck);
+      map.on('zoom', throttledCheck);
 
       // Save detach function for cleanup
       detachFnRef.current = () => {
@@ -79,9 +75,8 @@ export const MapViewTracker: React.FC<MapViewTrackerProps> = ({
           clearTimeout(checkTimeoutRef.current);
         }
         if (map && map.off) {
-          map.off('move', immediateCheck);
-          map.off('moveend', debouncedCheck);
-          map.off('zoomend', debouncedCheck);
+          map.off('move', throttledCheck);
+          map.off('zoom', throttledCheck);
         }
       };
     };

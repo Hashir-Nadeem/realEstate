@@ -43,7 +43,7 @@ export const PropertyTypeToggle: React.FC<PropertyTypeToggleProps> = ({
         </button>
       </div>
 
-      {/* Sale Types Legend - only show when sale is enabled */}
+      {/* Sale Types Legend - only show when sale is enabled
       {showSale && (
         <div className="mt-3 bg-white rounded-lg shadow-lg p-3 border border-gray-200 w-32">
           <div className="text-xs font-medium mb-2 text-gray-600">Sale Types:</div>
@@ -53,16 +53,16 @@ export const PropertyTypeToggle: React.FC<PropertyTypeToggleProps> = ({
               <span className="text-xs">Residential</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-              <span className="text-xs">Luxury</span>
-            </div>
-            <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
               <span className="text-xs">Commercial</span>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-xs">Farmland</span>
+            </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   )
 }
