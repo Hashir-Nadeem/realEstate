@@ -16,6 +16,7 @@ export const propertyData = [
     sqft: 130680, // 3 acres in sqft
     address: "Whitefield, Bangalore, Karnataka",
     has3DTour: true,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 3,
@@ -26,6 +27,7 @@ export const propertyData = [
     title: "2BHK Apartment in Koramangala",
     area: "1200 sq ft",
     city: "Bangalore",
+    locality: "Koramangala",
     imageUrl: "https://images.unsplash.com/photo-1598928506312-d2a3b6f3c6b2?q=80&w=1600&auto=format&fit=crop",
     images: [
       "https://images.unsplash.com/photo-1598928506312-d2a3b6f3c6b2?q=80&w=1600&auto=format&fit=crop",
@@ -35,7 +37,12 @@ export const propertyData = [
     baths: 2,
     sqft: 1200,
     address: "Koramangala, Bangalore, Karnataka",
+    floorNumber: "3",
+    totalFloors: "5",
+    facing: "North",
     has3DTour: false,
+    youtubeLink: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Sample YouTube link
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 22, // New commercial property
@@ -57,6 +64,8 @@ export const propertyData = [
     sqft: 2500,
     address: "MG Road, Bangalore, Karnataka",
     has3DTour: true,
+    tourLink: "https://www.example-tour.com/virtual-tour", // Sample tour link
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 
   // Chennai Properties
@@ -75,6 +84,7 @@ export const propertyData = [
     sqft: 1100,
     address: "T. Nagar, Chennai, Tamil Nadu",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 6,
@@ -95,6 +105,7 @@ export const propertyData = [
     sqft: 1600,
     address: "Adyar, Chennai, Tamil Nadu",
     has3DTour: true,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 
   // Mumbai Properties
@@ -118,6 +129,7 @@ export const propertyData = [
     sqft: 650,
     address: "Bandra West, Mumbai, Maharashtra",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 9,
@@ -134,6 +146,7 @@ export const propertyData = [
     sqft: 87120, // 2 acres in sqft
     address: "Lower Parel, Mumbai, Maharashtra",
     has3DTour: true,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 23, // New commercial property
@@ -150,6 +163,7 @@ export const propertyData = [
     sqft: 1200,
     address: "Andheri West, Mumbai, Maharashtra",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 
   // Delhi Properties
@@ -168,6 +182,7 @@ export const propertyData = [
     sqft: 1400,
     address: "Connaught Place, New Delhi, Delhi",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 12,
@@ -194,6 +209,7 @@ export const propertyData = [
     units: 2,
     facing: "north",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 
   // Hyderabad Properties
@@ -212,6 +228,7 @@ export const propertyData = [
     sqft: 65340, // 1.5 acres in sqft
     address: "Banjara Hills, Hyderabad, Telangana",
     has3DTour: true,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 15,
@@ -222,12 +239,17 @@ export const propertyData = [
     title: "3BHK in HITEC City",
     area: "1500 sq ft",
     city: "Hyderabad",
+    locality: "Koramangala",
     imageUrl: "https://images.unsplash.com/photo-1598928506312-d2a3b6f3c6b2?q=80&w=1600&auto=format&fit=crop",
     beds: 3,
     baths: 2,
     sqft: 1500,
     address: "HITEC City, Hyderabad, Telangana",
+    floorNumber: "3",
+    totalFloors: "5",
+    facing: "North",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 
   // Kolkata Properties
@@ -246,6 +268,7 @@ export const propertyData = [
     sqft: 1000,
     address: "Salt Lake, Kolkata, West Bengal",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 17,
@@ -262,6 +285,7 @@ export const propertyData = [
     sqft: 1400,
     address: "Park Street, Kolkata, West Bengal",
     has3DTour: true,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 
   // Fremont Properties (US)
@@ -280,6 +304,7 @@ export const propertyData = [
     sqft: 1834,
     address: "2247 Jackson St, Fremont, CA 94539",
     has3DTour: true,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 19,
@@ -296,6 +321,7 @@ export const propertyData = [
     sqft: 1200,
     address: "123 Market St, Fremont, CA 94538",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 
   // Vijayawada Properties
@@ -314,6 +340,7 @@ export const propertyData = [
     sqft: 1834,
     address: "Patamata, Vijayawada, AP 520010",
     has3DTour: true,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
   {
     id: 21,
@@ -330,5 +357,6 @@ export const propertyData = [
     sqft: 1100,
     address: "Governorpet, Vijayawada, AP 520002",
     has3DTour: false,
+    whatsapp: "+919876543210", // <-- Added phone/whatsapp
   },
 ];

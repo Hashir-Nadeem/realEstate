@@ -7,6 +7,8 @@ import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 import PropertyDetailWidget from '@/components/PropertyDetailWidget'
 import NearestPropertiesList from '@/components/NearestPropertiesList'
+import { calculateDistance } from '@/utils/locationUtils'
+import LocalCompsMap from '@/components/LocalCompsMap'
 
 interface Property {
   id: number | string
@@ -28,12 +30,19 @@ interface Property {
   floorNumber?: string
   totalFloors?: string
   facing?: string
+  youtubeLink?: string
+  tourLink?: string
+  whatsapp?: string
+  phone?: string
+  contactPhone?: string
+  contactPersonName?: string
 }
 
 export default function PropertyDetailsPage() {
   const params = useParams()
   const propertyId = params.id
   const [property, setProperty] = useState<Property | null>(null)
+  const [nearestProperties, setNearestProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const satelliteMapRef = useRef<any>(null)
   const locationMapRef = useRef<any>(null)
@@ -64,6 +73,38 @@ export default function PropertyDetailsPage() {
       fetchProperty()
     }
   }, [propertyId])
+
+  useEffect(() => {
+    if (!property) return
+
+    const fetchAndComputeNearest = async () => {
+      try {
+        const res = await fetch('/api/properties')
+        const allProperties = await res.json()
+
+        if (typeof property.lat !== 'number' || typeof property.lng !== 'number') {
+          setNearestProperties([])
+          return
+        }
+
+        const withDist = allProperties
+          .filter((p: Property) => p && p.lat !== undefined && p.lng !== undefined && p.id !== property.id)
+          .map((p: Property) => ({
+            ...p,
+            dist: calculateDistance(property.lat!, property.lng!, Number(p.lat), Number(p.lng)),
+          }))
+
+        withDist.sort((a: any, b: any) => a.dist - b.dist)
+        const nearest = withDist.slice(0, 8)
+        setNearestProperties(nearest)
+      } catch (err) {
+        console.error('Failed to fetch properties for nearest list', err)
+        setNearestProperties([])
+      }
+    }
+
+    fetchAndComputeNearest()
+  }, [property])
 
   // Load Leaflet and initialize maps
   useEffect(() => {
@@ -110,16 +151,18 @@ export default function PropertyDetailsPage() {
     // Initialize Satellite Map (left side)
     const satelliteContainer = document.getElementById('satellite-map')
     if (satelliteContainer && !satelliteMapRef.current) {
-      // disable the built-in attribution control so the small attribution text
-      // can be shown in the page footer instead (see Footer component)
-      const satelliteMap = window.L.map('satellite-map', { attributionControl: false }).setView([defaultLat, defaultLng], 16)
+      const satelliteMap = window.L.map('satellite-map', { 
+        attributionControl: false,
+        zoomControl: true // Enable zoom control
+      }).setView([defaultLat, defaultLng], 16)
       
-      // Use satellite imagery (tileLayer still carries attribution metadata)
+      // Position zoom control to bottom right to avoid button overlap
+      satelliteMap.zoomControl.setPosition('bottomright')
+      
       window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: '© Esri'
       }).addTo(satelliteMap)
 
-      // Add a marker for the property
       window.L.marker([defaultLat, defaultLng]).addTo(satelliteMap)
       
       satelliteMapRef.current = satelliteMap
@@ -128,15 +171,18 @@ export default function PropertyDetailsPage() {
     // Initialize Location Map (right side)
     const locationContainer = document.getElementById('location-map')
     if (locationContainer && !locationMapRef.current) {
-      // disable the built-in attribution control and show attribution in footer
-      const locationMap = window.L.map('location-map', { attributionControl: false }).setView([defaultLat, defaultLng], 14)
+      const locationMap = window.L.map('location-map', { 
+        attributionControl: false,
+        zoomControl: true // Enable zoom control
+      }).setView([defaultLat, defaultLng], 14)
       
-      // Use standard OpenStreetMap tiles
+      // Position zoom control to bottom left to avoid button overlap
+      locationMap.zoomControl.setPosition('bottomleft')
+      
       window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(locationMap)
 
-      // Add a marker for the property
       window.L.marker([defaultLat, defaultLng]).addTo(locationMap)
       
       locationMapRef.current = locationMap
@@ -299,6 +345,48 @@ export default function PropertyDetailsPage() {
             id="satellite-map" 
             className="absolute inset-0 w-full h-full"
           />
+          
+          {/* Look Around Button - top left */}
+          <div className="absolute top-4 left-4 z-[1000]">
+            <button
+              onClick={() => {
+                const lat = property?.lat || 12.9716
+                const lng = property?.lng || 77.5946
+                const streetViewUrl = `https://www.google.com/maps/@${lat},${lng},3a,75y,90t/data=!3m6!1e1!3m4!1s0x0:0x0!2e0!7i13312!8i6656`
+                window.open(streetViewUrl, '_blank')
+              }}
+              className="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg hover:bg-gray-700 transition-colors text-sm font-medium border border-gray-600"
+            >
+              <img src="/kind.png" alt="Look Around" width={20} height={20} />
+              Look Around
+            </button>
+          </div>
+
+          {/* Look Inside Button - top right */}
+          <div className="absolute top-4 right-4 z-[1000]">
+            <button
+              onClick={() => {
+                const youtubeLink = (property as any)?.youtubeLink
+                const tourLink = (property as any)?.tourLink
+                if (youtubeLink) {
+                  window.open(youtubeLink, '_blank')
+                } else if (tourLink) {
+                  window.open(tourLink, '_blank')
+                } else {
+                  console.log('No YouTube or tour link available for this property')
+                }
+              }}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg transition-colors text-sm font-medium border ${
+                (property as any)?.youtubeLink || (property as any)?.tourLink
+                  ? 'bg-gray-800 text-white hover:bg-gray-700 cursor-pointer border-gray-600'
+                  : 'bg-gray-400 text-gray-200 cursor-not-allowed border-gray-300'
+              }`}
+              disabled={!((property as any)?.youtubeLink || (property as any)?.tourLink)}
+            >
+              <img src="/kind.png" alt="Look Inside" width={20} height={20} />
+              Look Inside
+            </button>
+          </div>
         </div>
         
         {/* Location Map - Right Side */}
@@ -310,14 +398,18 @@ export default function PropertyDetailsPage() {
         </div>
       </div>
 
-      {/* Property Details Content (now using reusable widget) */}
+  {/* Property Details Content (now using reusable widget) */}
       
-  <PropertyDetailWidget property={property} />
+  <PropertyDetailWidget property={property as any} />
+
+  {/* Local Comps Map */}
+  {property && nearestProperties.length > 0 && (
+    <LocalCompsMap centerProperty={property} properties={nearestProperties} />
+  )}
 
   {/* Nearest properties list (5-10 nearest) */}
-  <NearestPropertiesList currentProperty={property} limit={8} />
+  <NearestPropertiesList items={nearestProperties} />
 
-        
     </div>
   )
 }

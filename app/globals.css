@@ -118,3 +118,14 @@
 .leaflet-control-container {
   z-index: 10 !important;
 }
+
+/* Ensure map overlay buttons have higher z-index than map controls */
+.leaflet-control-zoom {
+  z-index: 100 !important;
+}
+
+/* Custom map overlay buttons */
+.map-overlay-button {
+  z-index: 1000 !important;
+  position: relative;
+}

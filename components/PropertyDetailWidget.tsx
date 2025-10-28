@@ -11,6 +11,10 @@ import {
 } from "lucide-react"
 
 interface Property {
+  whatsapp: any
+  phone: any
+  contactPhone: any
+  contactPersonName: any
   id: number | string
   title: string
   price: string
@@ -110,6 +114,54 @@ export const PropertyDetailWidget: React.FC<Props> = ({ property }) => {
           {/* Row 4: Address */}
           <div style={{ color: '#888', fontSize: 12, lineHeight: 1.4, wordWrap: 'break-word', overflowWrap: 'break-word' }}>
             {address}
+          </div>
+
+          {/* Contact Owner & Get Phone No. Buttons */}
+          <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
+            <button
+              type="button"
+              style={{
+                background: '#e53935',
+                color: 'white',
+                border: 'none',
+                borderRadius: 24,
+                padding: '12px 32px',
+                fontWeight: 600,
+                fontSize: 16,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+              onClick={() => {
+                // Use tel: link for phone dialer (replace with actual phone number if available)
+                const phone = property.whatsapp || property.phone || property.contactPhone || property.contactPersonName || ''
+                window.open(`tel:${phone || ''}`, '_blank')
+              }}
+            >
+              Contact Owner
+            </button>
+            <button
+              type="button"
+              style={{
+                background: 'white',
+                color: '#e53935',
+                border: '2px solid #e53935',
+                borderRadius: 24,
+                padding: '12px 32px',
+                fontWeight: 600,
+                fontSize: 16,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+              onClick={() => {
+                // Use tel: link for phone dialer (replace with actual phone number if available)
+                const phone = property.whatsapp || property.phone || property.contactPhone || property.contactPersonName || ''
+                window.open(`tel:${phone || ''}`, '_blank')
+              }}
+            >
+              Get Phone No.
+            </button>
           </div>
         </div>
       </div>

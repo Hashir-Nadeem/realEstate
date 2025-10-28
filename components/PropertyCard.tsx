@@ -68,7 +68,7 @@ export default function PropertyCard({ property: p, onHeartClick }: Props) {
         <div style={{
           position: 'relative',
           width: '100%',
-          aspectRatio: '16 / 9', // Responsive aspect ratio
+          aspectRatio: '16 / 9',
           overflow: 'hidden'
         }}>
           <img 
@@ -104,7 +104,7 @@ export default function PropertyCard({ property: p, onHeartClick }: Props) {
         
         {/* Content Section */}
         <div style={{ padding: '12px 16px' }}>
-          {/* Row 1: Property Type and Status */}
+          {/* Row 1: Property Type and Status with Locality */}
           <div style={{ marginBottom: '6px' }}>
             <span style={{
               color: '#333',
@@ -129,7 +129,7 @@ export default function PropertyCard({ property: p, onHeartClick }: Props) {
             </span>
           </div>
           
-          {/* Row 3: Details with icons */}
+          {/* Row 3: Details with icons - Include all details */}
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -158,16 +158,33 @@ export default function PropertyCard({ property: p, onHeartClick }: Props) {
               <span>{beds} Beds</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-              <img src="/icons/bath.png" width="14" height="14" style={{ objectFit: 'contain' }} alt="Bathroom"/>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 11H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h5m0-7v7m0-7h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-5m0-7V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2Z"/>
+              </svg>
               <span>{baths} Baths</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-              <img src="/icons/balcony.png" width="14" height="14" style={{ objectFit: 'contain' }} alt="Facing"/>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+                <path d="M12 2v2"/>
+                <path d="M12 20v2"/>
+                <path d="M4.93 4.93l1.41 1.41"/>
+                <path d="M17.66 17.66l1.41 1.41"/>
+                <path d="M2 12h2"/>
+                <path d="M20 12h2"/>
+                <path d="M6.34 17.66l-1.41 1.41"/>
+                <path d="M19.07 4.93l-1.41 1.41"/>
+              </svg>
               <span>{facing}</span>
             </div>
             {floorNumber !== '' && totalFloors !== '' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-                <img src="/icons/balcony.png" width="14" height="14" style={{ objectFit: 'contain' }} alt="Floors"/>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21h18"/>
+                  <path d="M5 21V7l8-4v18"/>
+                  <path d="M19 21V11l-6-4"/>
+                </svg>
                 <span>{floorNumber === '0' ? 'Ground' : floorNumber} of {totalFloors} Floors</span>
               </div>
             )}
