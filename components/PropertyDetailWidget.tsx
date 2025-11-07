@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import {
   Bath,
   Bed,
@@ -9,6 +9,7 @@ import {
   MapPin,
   Layers,
 } from "lucide-react"
+import ContactOwnerDialog from "./ContactOwnerDialog"
 
 interface Property {
   whatsapp: any
@@ -39,6 +40,16 @@ interface Props {
 
 export const PropertyDetailWidget: React.FC<Props> = ({ property }) => {
   const { title, price, address, beds, baths, area, description, locality, city, type } = property
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false)
+
+  const handleContactClick = () => {
+    setIsContactDialogOpen(true)
+  }
+
+  const handleCloseDialog = () => {
+    setIsContactDialogOpen(false)
+  }
+
   return (
     <div className="w-full pt-4 pb-4 pl-4 pr-4">
       <div className="bg-white rounded-md ">
@@ -132,11 +143,7 @@ export const PropertyDetailWidget: React.FC<Props> = ({ property }) => {
                 cursor: 'pointer',
                 outline: 'none',
               }}
-              onClick={() => {
-                // Use tel: link for phone dialer (replace with actual phone number if available)
-                const phone = property.whatsapp || property.phone || property.contactPhone || property.contactPersonName || ''
-                window.open(`tel:${phone || ''}`, '_blank')
-              }}
+              onClick={handleContactClick}
             >
               Contact Owner
             </button>
@@ -154,17 +161,21 @@ export const PropertyDetailWidget: React.FC<Props> = ({ property }) => {
                 cursor: 'pointer',
                 outline: 'none',
               }}
-              onClick={() => {
-                // Use tel: link for phone dialer (replace with actual phone number if available)
-                const phone = property.whatsapp || property.phone || property.contactPhone || property.contactPersonName || ''
-                window.open(`tel:${phone || ''}`, '_blank')
-              }}
+              onClick={handleContactClick}
             >
               Get Phone No.
             </button>
           </div>
         </div>
       </div>
+
+      {/* Contact Owner Dialog */}
+      <ContactOwnerDialog
+        isOpen={isContactDialogOpen}
+        onClose={handleCloseDialog}
+        ownerContact={property.whatsapp || property.phone || property.contactPhone || '+91 98765 43210'}
+        propertyId={property.id}
+      />
     </div>
   )
 }

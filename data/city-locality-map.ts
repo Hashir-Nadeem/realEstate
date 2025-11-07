@@ -696,6 +696,18 @@ export const cityLocalityMap: Record<string, string[]> = {
     "Mangalagiri",
     "Tadikonda",
     "Nallapadu"
+  ],
+  "Fremont": [
+    "Ardenwood",
+    "Centerville",
+    "Mission San Jose",
+    "Niles",
+    "Warm Springs",
+    "Downtown Fremont",
+    "Forest Park",
+    "Glenmoor",
+    "Parkmont",
+    "Thornton"
   ]
 };
 

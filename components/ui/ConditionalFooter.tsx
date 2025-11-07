@@ -6,8 +6,14 @@ import { Footer } from './Footer'
 export const ConditionalFooter = () => {
   const pathname = usePathname()
   
-  // Hide footer only on home page
-  if (pathname === '/') {
+  // Hide footer on home page and the help page (including nested help routes)
+  // e.g. '/', '/help', '/help/...'
+  if (
+    pathname === '/' ||
+    pathname === '/help' ||
+    pathname === '/list' ||
+    (pathname && pathname.startsWith('/help/'))
+  ) {
     return null
   }
 

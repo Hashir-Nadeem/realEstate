@@ -43,6 +43,7 @@ export default function PropertyDetailsPage() {
   const propertyId = params.id
   const [property, setProperty] = useState<Property | null>(null)
   const [nearestProperties, setNearestProperties] = useState<Property[]>([])
+  const [visibleProperties, setVisibleProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const satelliteMapRef = useRef<any>(null)
   const locationMapRef = useRef<any>(null)
@@ -404,11 +405,15 @@ export default function PropertyDetailsPage() {
 
   {/* Local Comps Map */}
   {property && nearestProperties.length > 0 && (
-    <LocalCompsMap centerProperty={property} properties={nearestProperties} />
+    <LocalCompsMap 
+      centerProperty={property} 
+      properties={nearestProperties} 
+      onVisiblePropertiesChange={(visibleProperties: any) => setVisibleProperties(visibleProperties as any)}
+    />
   )}
 
   {/* Nearest properties list (5-10 nearest) */}
-  <NearestPropertiesList items={nearestProperties} />
+  <NearestPropertiesList items={visibleProperties} />
 
     </div>
   )

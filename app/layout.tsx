@@ -4,6 +4,8 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { Footer } from '@/components/ui/Footer'
 import { ConditionalFooter } from '@/components/ui/ConditionalFooter'
+import { ConditionalBottomNavigation } from '@/components/ui/ConditionalBottomNavigation'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
@@ -26,11 +28,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className={`${GeistSans.className} min-h-screen flex flex-col`}>
-        <main className="flex-1">
-          {children}
-        </main>
-        <ConditionalFooter />
-        <ToastContainer position="top-right" autoClose={3000} />
+        <AuthProvider>
+          <main className="flex-1">
+            {children}
+          </main>
+          <ConditionalBottomNavigation />
+          <ConditionalFooter />
+          <ToastContainer position="top-right" autoClose={3000} />
+        </AuthProvider>
       </body>
     </html>
   )

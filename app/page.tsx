@@ -10,6 +10,7 @@ import { PostPropertyButton } from "@/components/ui/PostPropertyButton"
 import { useGeolocation } from "@/hooks/useGeolocation"
 import { useMapViewState, City } from "@/hooks/useMapViewState"
 import Link from "next/link"
+import AuthLoginCTA from '@/components/ui/AuthLoginCTA'
 
 // Dynamically import map to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
@@ -183,6 +184,12 @@ export default function HomePage() {
             )}
           </div>
 
+          {/* Login CTA (right of search, left of location) */}
+          <div className="flex-shrink-0">
+            {/* show login when not authenticated, otherwise show user's first name */}
+            <AuthLoginCTA />
+          </div>
+
           {/* Current Location Button */}
           <Button
             onClick={handleRecenterToUserLocation}
@@ -257,6 +264,24 @@ export default function HomePage() {
             if (tab.name === "List") {
               return (
                 <Link href="/list" key={tab.name} className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-600 hover:text-gray-800 transition-colors">
+                  <Icon className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">{tab.name}</span>
+                </Link>
+              )
+            }
+
+            if (tab.name === "Help") {
+              return (
+                <Link href="/help" key={tab.name} className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-600 hover:text-gray-800 transition-colors">
+                  <Icon className="w-6 h-6 mb-1" />
+                  <span className="text-xs font-medium">{tab.name}</span>
+                </Link>
+              )
+            }
+
+            if (tab.name === "Services") {
+              return (
+                <Link href="/post-property" key={tab.name} className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-600 hover:text-gray-800 transition-colors">
                   <Icon className="w-6 h-6 mb-1" />
                   <span className="text-xs font-medium">{tab.name}</span>
                 </Link>

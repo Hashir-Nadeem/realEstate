@@ -12,6 +12,7 @@ import { useCityLocality } from "@/hooks/useCityLocality"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useRouter } from "next/navigation"
 import { Footer } from "@/components/ui/Footer"
+import { useAuth } from "@/contexts/AuthContext"
 
 const MapSelector = dynamic(() => import("@/components/map-selector"), {
   ssr: false,
@@ -19,6 +20,9 @@ const MapSelector = dynamic(() => import("@/components/map-selector"), {
 })
 
 export default function PostPropertyPage() {
+  const router = useRouter()
+  const { isAuthenticated, loading: authLoading, user } = useAuth()
+  
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [isFormEnabled, setIsFormEnabled] = useState(false) // Track form enabled/disabled state
   
@@ -53,6 +57,9 @@ export default function PostPropertyPage() {
   const [isPropertyTypeOpen, setIsPropertyTypeOpen] = useState(false)
   const propertyTypeRef = useRef<HTMLDivElement>(null)
   
+  // Custom city/locality state
+  const [useCustomLocation, setUseCustomLocation] = useState(false)
+  
   const [formData, setFormData] = useState({
     // Basic Property Details
     propertyCategory: "",
@@ -76,6 +83,8 @@ export default function PostPropertyPage() {
     fullAddress: "",
     city: "",
     locality: "",
+    customCity: "",
+    customLocality: "",
 
     // Contact Information
     contactPersonName: "",
@@ -390,12 +399,32 @@ export default function PostPropertyPage() {
     }))
   }
 
-  const router = useRouter()
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/post-property')
+      return
+    }
+    
     setSubmitMessage(null)
     setIsSubmitting(true)
+
+    // Validation for custom city/locality
+    if (useCustomLocation) {
+      if (!formData.customCity.trim() || !formData.customLocality.trim()) {
+        setSubmitMessage("Please fill in both custom city and locality fields.")
+        setIsSubmitting(false)
+        return
+      }
+    } else {
+      if (!formData.city || !formData.locality) {
+        setSubmitMessage("Please select both city and locality from dropdowns.")
+        setIsSubmitting(false)
+        return
+      }
+    }
 
     try {
       // 1) upload images first (if any)
@@ -418,6 +447,9 @@ export default function PostPropertyPage() {
         // include uploadedImages (URLs) and clear file objects before sending JSON
         formData: {
           ...formData,
+          // Use custom city/locality if checkbox is checked, otherwise use dropdown values
+          city: useCustomLocation ? formData.customCity : formData.city,
+          locality: useCustomLocation ? formData.customLocality : formData.locality,
           uploadedImages: uploadedUrls,
           photos: [], // don't send File objects
         },
@@ -474,14 +506,33 @@ export default function PostPropertyPage() {
 
   // Sync form data when city is auto-selected based on user location
   useEffect(() => {
-    if (selectedCity && selectedCity !== formData.city) {
+    if (selectedCity && selectedCity !== formData.city && !useCustomLocation) {
       setFormData(prev => ({
         ...prev,
         city: selectedCity,
         locality: '' // Reset locality when city changes
       }))
     }
-  }, [selectedCity, formData.city])
+  }, [selectedCity, formData.city, useCustomLocation])
+
+  // Clear form fields when switching between dropdown and custom inputs
+  useEffect(() => {
+    if (useCustomLocation) {
+      // Clear dropdown values when switching to custom
+      setFormData(prev => ({
+        ...prev,
+        city: '',
+        locality: ''
+      }))
+    } else {
+      // Clear custom values when switching to dropdown
+      setFormData(prev => ({
+        ...prev,
+        customCity: '',
+        customLocality: ''
+      }))
+    }
+  }, [useCustomLocation])
 
   const handleEnableForm = (enable: boolean) => {
     setIsFormEnabled(enable)
@@ -814,13 +865,13 @@ export default function PostPropertyPage() {
               <label>Address</label>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 -mt-8">
+            <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="txt_field">
                 <select
                   value={formData.city}
                   onChange={(e) => handleInputChange("city", e.target.value)}
                   required
-                  disabled={!isFormEnabled} // Disable when form is not enabled
+                  disabled={!isFormEnabled || useCustomLocation} // Disable when form is not enabled or using custom
                 >
                   <option value="" disabled>Select City</option>
                   {cities.map((city) => (
@@ -836,7 +887,7 @@ export default function PostPropertyPage() {
                   value={formData.locality}
                   onChange={(e) => handleInputChange("locality", e.target.value)}
                   required
-                  disabled={!selectedCity || !isFormEnabled} // Disable when city is not selected or form is not enabled
+                  disabled={!selectedCity || !isFormEnabled || useCustomLocation} // Disable when city is not selected, form is not enabled, or using custom
                 >
                   <option value="" disabled>
                     {selectedCity ? "Select Locality" : "Select City First"}
@@ -851,7 +902,50 @@ export default function PostPropertyPage() {
               </div>
             </div>
 
-            <div className="-mt-8">
+            {/* Custom Location Checkbox */}
+            <div className="flex items-center gap-3 mt-6 mb-6">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="useCustomLocation"
+                  checked={useCustomLocation}
+                  onChange={(e) => setUseCustomLocation(e.target.checked)}
+                  className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 focus:ring-2 flex-shrink-0"
+                  disabled={!isFormEnabled}
+                />
+                <label htmlFor="useCustomLocation" className="ml-2 text-sm text-gray-700 leading-relaxed">
+                  Add custom city/locality not in dropdown
+                </label>
+              </div>
+            </div>
+
+            {/* Custom City and Locality Inputs */}
+            {useCustomLocation && (
+              <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
+                <div className="txt_field">
+                  <input
+                    type="text"
+                    value={formData.customCity}
+                    onChange={(e) => handleInputChange("customCity", e.target.value)}
+                    required={useCustomLocation}
+                    disabled={!isFormEnabled}
+                    placeholder="Enter custom city"
+                  />
+                </div>
+                <div className="txt_field">
+                  <input
+                    type="text"
+                    value={formData.customLocality}
+                    onChange={(e) => handleInputChange("customLocality", e.target.value)}
+                    required={useCustomLocation}
+                    disabled={!isFormEnabled}
+                    placeholder="Enter custom locality"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4">
               <div className="txt_field">
                 <input
                   type="text"
@@ -1095,7 +1189,12 @@ export default function PostPropertyPage() {
               className={`submit-btn ${!isFormEnabled ? "opacity-50 pointer-events-none" : ""}`}
               disabled={!isFormEnabled || isSubmitting} // Disable when form is not enabled or submitting
             >
-              {isSubmitting ? "Saving..." : "Login & Post Property"}
+              {isSubmitting 
+                ? "Saving..." 
+                : isAuthenticated 
+                  ? "Post Property" 
+                  : "Login & Post Property"
+              }
             </button>
             {submitMessage && (
               <div className="mt-3 text-sm text-gray-700">{submitMessage}</div>
@@ -1168,7 +1267,7 @@ export default function PostPropertyPage() {
         .property-form-container {
           max-width: 650px;
           width: 100%;
-          margin: 3rem 2rem 2rem auto;
+          margin: 3rem 2rem 7rem auto;
           background-color: rgba(255, 255, 255, 0.98);
           border-radius: 16px;
           padding: 2rem;
@@ -1181,7 +1280,7 @@ export default function PostPropertyPage() {
         @media (max-width: 768px) {
           .property-form-container {
             max-width: calc(100% - 2rem);
-            margin: 1rem;
+            margin: 1rem 1rem 7rem 1rem;
             padding: 1.5rem;
           }
         }
@@ -1581,6 +1680,8 @@ export default function PostPropertyPage() {
           }
         }
       `}</style>
+
+     
     </div>
   )
 }

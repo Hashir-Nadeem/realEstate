@@ -7,11 +7,25 @@ interface Property {
   lat?: number
   lng?: number
   type?: string
+  city?: string
+  title?: string
+  price?: string
+  address?: string
+  beds?: number
+  baths?: number
+  area?: string
+  sqft?: number
+  floorNumber?: string
+  totalFloors?: string
+  facing?: string
+  locality?: string
+  imageUrl?: string
 }
 
 interface Props {
   centerProperty: Property
   properties: Property[]
+  onVisiblePropertiesChange?: (visibleProperties: Property[]) => void
 }
 
 declare global {
@@ -20,7 +34,7 @@ declare global {
   }
 }
 
-const LocalCompsMap: React.FC<Props> = ({ centerProperty, properties }) => {
+const LocalCompsMap: React.FC<Props> = ({ centerProperty, properties, onVisiblePropertiesChange }) => {
   const mapRef = useRef<any>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const leafletLoaded = useRef(false)
@@ -48,16 +62,57 @@ const LocalCompsMap: React.FC<Props> = ({ centerProperty, properties }) => {
     loadLeaflet()
   }, [])
 
+  // Calculate city bounds based on center property
+  const getCityBounds = (centerLat: number, centerLng: number) => {
+    // Create a reasonable city boundary (approximately 15-20km radius)
+    const cityRadius = 0.15 // approximately 15-20km in degrees
+    return {
+      north: centerLat + cityRadius,
+      south: centerLat - cityRadius,
+      east: centerLng + cityRadius,
+      west: centerLng - cityRadius
+    }
+  }
+
+  // Filter properties that are within the city bounds
+  const filterPropertiesInCity = (centerProperty: Property, allProperties: Property[]) => {
+    if (!centerProperty.lat || !centerProperty.lng) return []
+    
+    const bounds = getCityBounds(centerProperty.lat, centerProperty.lng)
+    
+    return allProperties.filter(property => {
+      if (!property.lat || !property.lng || property.id === centerProperty.id) return false
+      
+      return (
+        property.lat >= bounds.south &&
+        property.lat <= bounds.north &&
+        property.lng >= bounds.west &&
+        property.lng <= bounds.east &&
+        property.city === centerProperty.city // Also filter by city name if available
+      )
+    })
+  }
+
   const initializeMap = () => {
     if (!mapContainerRef.current || !window.L || mapRef.current || !centerProperty.lat || !centerProperty.lng) {
       return
     }
 
     const L = window.L
+    
+    // Filter properties to only show those in the same city
+    const cityProperties = filterPropertiesInCity(centerProperty, properties)
+    
+    // Notify parent component about visible properties
+    if (onVisiblePropertiesChange) {
+      onVisiblePropertiesChange(cityProperties)
+    }
+
+    // Create map with higher zoom level to focus on city area
     const map = L.map(mapContainerRef.current, {
       zoomControl: false,
       attributionControl: false,
-    }).setView([centerProperty.lat, centerProperty.lng], 12) // Adjusted zoom level to 12
+    }).setView([centerProperty.lat, centerProperty.lng], 14) // Increased zoom from 12 to 14
 
     mapRef.current = map
 
@@ -75,17 +130,26 @@ const LocalCompsMap: React.FC<Props> = ({ centerProperty, properties }) => {
     // Add marker for the center property (blue)
     L.marker([centerProperty.lat, centerProperty.lng], { icon: createIcon('#3B82F6') }).addTo(map)
 
-    // Add markers for other properties (green)
-    const bounds = L.latLngBounds([centerProperty.lat, centerProperty.lng]) // Initialize bounds with center property
-    properties.forEach(p => {
-      if (p.lat && p.lng && p.id !== centerProperty.id) {
-        L.marker([p.lat, p.lng], { icon: createIcon('#10B981') }).addTo(map)
-        bounds.extend([p.lat, p.lng]) // Extend bounds to include each property
-      }
-    })
+    // Add markers only for properties in the same city (green)
+    if (cityProperties.length > 0) {
+      const bounds = L.latLngBounds([centerProperty.lat, centerProperty.lng])
+      
+      cityProperties.forEach(p => {
+        if (p.lat && p.lng) {
+          L.marker([p.lat, p.lng], { icon: createIcon('#10B981') }).addTo(map)
+          bounds.extend([p.lat, p.lng])
+        }
+      })
 
-    // Fit map to bounds to ensure all markers are visible
-    map.fitBounds(bounds, { padding: [50, 50] })
+      // Fit map to bounds with more padding to keep focus on city area
+      map.fitBounds(bounds, { 
+        padding: [30, 30],
+        maxZoom: 15 // Limit max zoom to keep city-level view
+      })
+    } else {
+      // If no nearby properties, just set a reasonable city-level zoom
+      map.setZoom(14)
+    }
   }
 
   useEffect(() => {
@@ -103,7 +167,7 @@ const LocalCompsMap: React.FC<Props> = ({ centerProperty, properties }) => {
   return (
     <div className="w-full p-4">
       <h3 className="text-lg font-medium text-gray-900 mb-3">Local Comps</h3>
-      <div ref={mapContainerRef} className="w-full h-96 rounded-lg" /> {/* Increased height to h-96 */}
+      <div ref={mapContainerRef} className="w-full h-96 rounded-lg" />
     </div>
   )
 }

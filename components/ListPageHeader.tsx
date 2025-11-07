@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import AuthLoginCTA from '@/components/ui/AuthLoginCTA'
 import { Filter } from "lucide-react"
 import { useCityLocality } from "@/hooks/useCityLocality"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -132,12 +133,17 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
           </Popover>
         </div>
 
-        {/* Post Property Button */}
-        <Link href="/" passHref>
-          <Button className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0 whitespace-nowrap w-full sm:w-auto">
-            Post Property <span className="ml-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-sm">FREE</span>
-          </Button>
-        </Link>
+        {/* Login CTA (right of search/fillers) */}
+        <div className="flex items-center gap-2">
+          <AuthLoginCTA />
+
+          {/* Post Property Button */}
+          <Link href="/post-property" passHref>
+            <Button className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0 whitespace-nowrap w-full sm:w-auto">
+              Post Property <span className="ml-1 bg-white text-green-700 text-xs font-bold px-1.5 py-0.5 rounded-sm">FREE</span>
+            </Button>
+          </Link>
+        </div>
       </div>
     </header>
   )
