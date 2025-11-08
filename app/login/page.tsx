@@ -230,14 +230,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Demo Instructions */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-blue-800 text-sm font-medium mb-2">Demo Instructions:</p>
-          <p className="text-blue-700 text-xs">
-            To test the app, first create an account using the "Create Account" link above.
-            After signup and OTP verification, you can login with your phone number and password.
-          </p>
-        </div>
+        
       </div>
     </div>
   )

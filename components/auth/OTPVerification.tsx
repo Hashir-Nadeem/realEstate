@@ -145,9 +145,7 @@ export default function OTPVerification({ phone, onSuccess, onBack }: OTPVerific
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Verify your number
           </h1>
-          <p className="text-gray-600 mb-1">
-            Enter any 3-digit code (demo mode)
-          </p>
+          
           <div className="flex items-center justify-center gap-2">
             <span className="font-medium text-gray-900">
               WhatsApp no. {maskedPhone}
@@ -159,11 +157,7 @@ export default function OTPVerification({ phone, onSuccess, onBack }: OTPVerific
               Edit
             </button>
           </div>
-          <div className="mt-2">
-            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-              💡 Demo: Any 3-digit code will work
-            </span>
-          </div>
+          
         </div>
 
         {/* OTP Input */}
