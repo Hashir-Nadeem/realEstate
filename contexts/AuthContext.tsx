@@ -12,6 +12,8 @@ import {
   clearPendingVerification,
   generateOTP,
   getUserByPhone,
+  getUserByPhoneFromCSV,
+  saveUserToCSV,
   addUserToList,
   validatePassword,
   validatePhone,
@@ -91,16 +93,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, message: 'Password is required' }
       }
 
-      // Find user by phone
-      const existingUser = getUserByPhone(phone)
+      // Find user by phone - first check local storage, then CSV
+      let existingUser = getUserByPhone(phone)
+      
+      if (!existingUser) {
+        // Check CSV for user
+        try {
+          existingUser = await getUserByPhoneFromCSV(phone)
+        } catch (error) {
+          console.error('Error checking CSV for user:', error)
+        }
+      }
       
       if (!existingUser) {
         return { success: false, message: 'User not found. Please sign up first.' }
       }
 
-      // For demo purposes, we'll just check if password length matches
-      // In real app, you'd hash and compare passwords
-      if (!validatePassword(password)) {
+      // For demo purposes, we'll check password against stored password if available
+      // In production, you'd hash and compare passwords
+      if (existingUser.password && password !== existingUser.password) {
+        return { success: false, message: 'Invalid password' }
+      } else if (!existingUser.password && !validatePassword(password)) {
         return { success: false, message: 'Invalid password' }
       }
 
@@ -136,8 +149,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, message: 'Password must be at least 6 characters long' }
       }
 
-      // Check if user already exists
-      const existingUser = getUserByPhone(phone)
+      // Check if user already exists - check both local storage and CSV
+      let existingUser = getUserByPhone(phone)
+      
+      if (!existingUser) {
+        try {
+          existingUser = await getUserByPhoneFromCSV(phone)
+        } catch (error) {
+          console.error('Error checking CSV for existing user:', error)
+        }
+      }
+      
       if (existingUser) {
         return { success: false, message: 'User with this phone number already exists' }
       }
@@ -202,21 +224,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: true, message: 'Login successful!' }
       }
 
-      // Regular OTP verification for signup
-      if (otp !== pendingVerification.otp) {
-        return { success: false, message: 'Invalid OTP. Please try again.' }
+      // Accept any OTP for demo purposes (not just the generated one)
+      // This makes it work like you requested - user can enter any random code
+      if (!otp || otp.trim().length === 0) {
+        return { success: false, message: 'Please enter the OTP' }
       }
 
-      // Create user
+      // For actual verification, we'll accept any non-empty OTP
+      // In production, you would verify against pendingVerification.otp
+
+      // Create user with password included
       const newUser: User = {
         id: Date.now().toString(),
         name: pendingVerification.name,
         email: pendingVerification.email,
         phone: pendingVerification.phone,
+        password: pendingVerification.password, // Include password in user object
         createdAt: new Date().toISOString()
       }
 
-      // Save user
+      // Save user to CSV via API
+      try {
+        const csvResult = await saveUserToCSV({
+          name: pendingVerification.name,
+          email: pendingVerification.email,
+          phone: pendingVerification.phone,
+          password: pendingVerification.password
+        })
+
+        if (!csvResult.success) {
+          console.error('Failed to save user to CSV:', csvResult.message)
+          // Continue anyway for better user experience
+        } else {
+          console.log('✅ User successfully saved to CSV with ID:', csvResult.userId)
+        }
+      } catch (error) {
+        console.error('Error saving user to CSV:', error)
+        // Continue anyway for better user experience
+      }
+
+      // Save user to local storage as well
       setUser(newUser)
       setIsAuthenticated(true)
       saveUser(newUser)

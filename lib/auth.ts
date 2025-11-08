@@ -5,6 +5,7 @@ export interface User {
   name: string
   email: string
   phone: string
+  password?: string // Optional for backwards compatibility, but required for new registrations
   createdAt: string
 }
 
@@ -96,6 +97,77 @@ export function getUserByPhone(phone: string): User | null {
   }
 }
 
+// Get users from CSV via API (for server-side or real-time data)
+export async function getUsersFromCSV(): Promise<User[]> {
+  try {
+    const response = await fetch('/api/register-user')
+    const data = await response.json()
+    return data.users || []
+  } catch (error) {
+    console.error('Failed to fetch users from CSV:', error)
+    return []
+  }
+}
+
+// Get user by phone from CSV via API
+export async function getUserByPhoneFromCSV(phone: string): Promise<User | null> {
+  try {
+    const users = await getUsersFromCSV()
+    return users.find(user => user.phone === phone) || null
+  } catch (error) {
+    console.error('Failed to get user by phone from CSV:', error)
+    return null
+  }
+}
+
+// Save user registration to CSV via API
+export async function saveUserToCSV(userData: {
+  name: string
+  email: string
+  phone: string
+  password: string
+}): Promise<{ success: boolean; message: string; userId?: string }> {
+  try {
+    const userRegistration = {
+      id: Date.now().toString(),
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      password: userData.password, // In production, this should be hashed
+      createdAt: new Date().toISOString()
+    }
+
+    const response = await fetch('/api/register-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userRegistration),
+    })
+
+    const result = await response.json()
+
+    if (response.ok) {
+      return {
+        success: true,
+        message: result.message,
+        userId: result.userId
+      }
+    } else {
+      return {
+        success: false,
+        message: result.message || 'Failed to save user registration'
+      }
+    }
+  } catch (error) {
+    console.error('Error saving user to CSV:', error)
+    return {
+      success: false,
+      message: 'Failed to save user registration'
+    }
+  }
+}
+
 // Get all registered users
 export function getAllUsers(): User[] {
   if (typeof window === 'undefined') return []
@@ -122,10 +194,19 @@ export function validatePassword(password: string): boolean {
   return password.length >= 6
 }
 
-// Validate phone number (Indian format)
+// Validate phone number (International format)
 export function validatePhone(phone: string): boolean {
-  const phoneRegex = /^[\+]?[91]?[6789]\d{9}$/
-  return phoneRegex.test(phone.replace(/\s/g, ''))
+  // Remove spaces, dashes, and other formatting characters
+  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '')
+  
+  // Accept international format: +countrycode followed by digits
+  // Minimum 7 digits (some countries), maximum 15 digits (E.164 standard)
+  const phoneRegex = /^\+\d{1,4}\d{6,14}$/
+  
+  // Also accept numbers without + prefix but with country code
+  const phoneRegexNoPlus = /^\d{7,15}$/
+  
+  return phoneRegex.test(cleanPhone) || phoneRegexNoPlus.test(cleanPhone)
 }
 
 // Validate email
