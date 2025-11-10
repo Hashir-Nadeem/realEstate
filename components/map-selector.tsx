@@ -11,7 +11,7 @@ declare global {
   interface Window {
     L: any
   }
-}
+} 
  
 
 export default function MapSelector({ onLocationSelect, userLocation }: MapSelectorProps) {
