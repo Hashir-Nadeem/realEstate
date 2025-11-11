@@ -225,6 +225,7 @@ interface FormData {
   email: string
   whatsapp: string
   countryCode: string
+  agreeToTerms: boolean
 }
 
 export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerContact, propertyId }) => {
@@ -232,7 +233,8 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
     name: '',
     email: '',
     whatsapp: '',
-    countryCode: '+91'
+    countryCode: '+91',
+    agreeToTerms: false
   })
   const [errors, setErrors] = useState<Partial<FormData>>({})
   const [showContact, setShowContact] = useState(false)
@@ -250,7 +252,7 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
     return emailRegex.test(email)
   }
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {
@@ -280,7 +282,13 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
       newErrors.whatsapp = 'Enter a valid phone number'
     }
 
-    if (Object.keys(newErrors).length > 0) {
+    // Validate terms agreement
+    if (!formData.agreeToTerms) {
+      // Don't set error in newErrors, just prevent submission
+      // The visual feedback will be through the checkbox state
+    }
+
+    if (Object.keys(newErrors).length > 0 || !formData.agreeToTerms) {
       setErrors(newErrors)
       return
     }
@@ -316,7 +324,7 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
   }
 
   const handleClose = () => {
-    setFormData({ name: '', email: '', whatsapp: '', countryCode: '+91' })
+    setFormData({ name: '', email: '', whatsapp: '', countryCode: '+91', agreeToTerms: false })
     setErrors({})
     setShowContact(false)
     setShowCountryDropdown(false)
@@ -734,34 +742,60 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
               fontSize: 12,
               color: '#6b7280'
             }}>
-              <span>I Agree to</span>
-              <button style={{
-                background: 'none',
-                border: 'none',
-                color: '#3b82f6',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontSize: 12
-              }}>
-                Terms of Use
-              </button>
+              <input
+                type="checkbox"
+                id="agreeToTerms"
+                checked={formData.agreeToTerms}
+                onChange={(e) => handleInputChange('agreeToTerms', e.target.checked)}
+                style={{
+                  width: 16,
+                  height: 16,
+                  cursor: 'pointer'
+                }}
+              />
+              <label 
+                htmlFor="agreeToTerms" 
+                style={{ 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4
+                }}
+              >
+                <span>I Agree to</span>
+                <button 
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#3b82f6',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    padding: 0
+                  }}
+                >
+                  Terms of Use
+                </button>
+              </label>
             </div>
 
             {/* Continue button */}
             <button
               onClick={handleContinue}
-              disabled={isLoading}
+              disabled={isLoading || !formData.agreeToTerms}
               style={{
                 width: '100%',
-                backgroundColor: '#dc2626',
+                backgroundColor: (!formData.agreeToTerms || isLoading) ? '#9ca3af' : '#dc2626',
                 color: 'white',
                 border: 'none',
                 borderRadius: 24,
                 padding: '16px',
                 fontSize: 16,
                 fontWeight: 600,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                opacity: isLoading ? 0.7 : 1
+                cursor: (isLoading || !formData.agreeToTerms) ? 'not-allowed' : 'pointer',
+                opacity: (isLoading || !formData.agreeToTerms) ? 0.7 : 1,
+                transition: 'background-color 0.2s, opacity 0.2s'
               }}
             >
               {isLoading ? 'Please wait...' : 'Continue'}
