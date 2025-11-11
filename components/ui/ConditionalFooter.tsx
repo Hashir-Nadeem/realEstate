@@ -12,6 +12,7 @@ export const ConditionalFooter = () => {
     pathname === '/' ||
     pathname === '/help' ||
     pathname === '/list' ||
+    pathname === '/post-property' ||
     (pathname && pathname.startsWith('/help/'))
   ) {
     return null
