@@ -296,26 +296,25 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
     setIsLoading(true)
 
     try {
-      // Save lead data to backend
-      const response = await fetch('/api/save-property', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          propertyId,
-          name: formData.name,
-          email: formData.email,
-          whatsapp: `${formData.countryCode}${formData.whatsapp}`,
-          type: 'contact_request'
-        })
+      // Since we're using hardcoded values and don't have actual backend,
+      // just log the lead data and proceed to show contact details
+      console.log('Lead data collected:', {
+        propertyId,
+        name: formData.name,
+        email: formData.email,
+        whatsapp: `${formData.countryCode}${formData.whatsapp}`,
+        type: 'contact_request',
+        timestamp: new Date().toISOString()
       })
 
-      if (response.ok) {
-        setShowContact(true)
-      }
+      // Simulate API call delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Always show contact details since we're using hardcoded values
+      setShowContact(true)
+
     } catch (error) {
-      console.error('Error saving lead:', error)
+      console.error('Error:', error)
       // Still show contact for demo purposes
       setShowContact(true)
     } finally {
