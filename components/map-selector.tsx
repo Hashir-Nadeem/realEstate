@@ -9,7 +9,7 @@ interface MapSelectorProps {
   
 declare global {
   interface Window {
-    L: any
+    L: any 
   } 
 } 
   
