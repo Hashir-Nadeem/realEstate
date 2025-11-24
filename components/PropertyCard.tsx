@@ -139,22 +139,30 @@ export default function PropertyCard({ property: p, onHeartClick }: Props) {
             color: '#666'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L22 22H2L12 2z"/>
-                <path d="M12 8v6"/>
-                <path d="M8 18h8"/>
-              </svg>
+                <img
+                  src="/icons/ruler.png"
+                  alt="Area"
+                  width={14}
+                  height={14}
+                  style={{ objectFit: 'contain' }}
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement
+                    if (!target.dataset.fallback) {
+                      target.dataset.fallback = 'true'
+                      target.src = '/icons/Ruler.svg'
+                    }
+                  }}
+                />
               <span>{areaDisplay}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/>
-                <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/>
-                <path d="M12 10v10"/>
-                <path d="M2 14h20"/>
-                <path d="M7 18h2"/>
-                <path d="M15 18h2"/>
-              </svg>
+                <img
+                  src="/icons/bed.png"
+                  alt="Beds"
+                  width={14}
+                  height={14}
+                  style={{ objectFit: 'contain' }}
+                />
               <span>{beds} Beds</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>

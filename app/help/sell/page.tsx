@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ChevronDown, ChevronUp, Home, Upload, FileText, SearchCheck } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronUp, Home, Upload, SearchCheck, PhoneOutgoing } from 'lucide-react'
 
 interface FAQ {
   id: string
@@ -17,6 +17,7 @@ interface TimelineStep {
   description: string
   icon: React.ReactNode
   color: string
+  image: string
 }
 
 export default function HelpSellPage() {
@@ -47,41 +48,39 @@ export default function HelpSellPage() {
     }
   ])
 
+  // Reuse the steps from the post property page (timeline design preserved)
   const timelineSteps: TimelineStep[] = [
     {
       id: '1',
-      title: 'Finalize a property',
-      description: 'Find the property you want to sell. We collect your location information.',
+      title: 'Walk to the center of the property you want to sell/rent',
+      description: 'This is very important as we place the property location on map',
       icon: <Home className="w-6 h-6" />,
-      color: '#10B981'
+      color: '#10B981',
+      image: '/images/steps/undraw_experience_design_re_dmqq.svg'
     },
     {
       id: '2',
-      title: 'Click Post Property Free button',
-      description: 'Click the post property button to start listing your property',
+      title: 'Post your Property Ad',
+      description: 'Enter all details like locality name, amenities along with uploading Photos',
       icon: <Upload className="w-6 h-6" />,
-      color: '#F59E0B'
+      color: '#F59E0B',
+      image: '/images/steps/undraw_messenger_re_8bky.svg'
     },
     {
       id: '3',
-      title: 'Enter details of property',
-      description: 'Fill in all the necessary details about your property',
-      icon: <FileText className="w-6 h-6" />,
-      color: '#3B82F6'
+      title: 'Receive calls from Buyer/Tenant',
+      description: 'Get access to Buyer/Tenant contact details & connect easily',
+      icon: <PhoneOutgoing className="w-6 h-6" />,
+      color: '#3B82F6',
+      image: '/images/steps/undraw_online_test_re_kyfx (1).svg'
     },
     {
       id: '4',
-      title: 'Upload photos, you can upload later',
-      description: 'Add high-quality photos of your property to attract buyers',
-      icon: <Upload className="w-6 h-6" />,
-      color: '#8B5CF6'
-    },
-    {
-      id: '5',
-      title: 'Submit property Ad',
-      description: 'Submit your property listing and start receiving inquiries',
+      title: 'Sell/Rent faster with instant Connect',
+      description: 'Negotiate with your prospective Buyer/Tenant & mutually close the deal (site-visit)',
       icon: <SearchCheck className="w-6 h-6" />,
-      color: '#EF4444'
+      color: '#EF4444',
+      image: '/images/steps/undraw_undraw_undraw_search_engines_041x_-2-_cl95_fiwb.svg'
     }
   ]
 
@@ -130,54 +129,22 @@ export default function HelpSellPage() {
 
               <div className="flex items-start justify-between pt-8">
                 {timelineSteps.map((step, index) => (
-                  <div key={step.id} className="flex-1 text-center relative" style={{ maxWidth: '200px' }}>
+                  <div key={step.id} className="flex-1 text-center relative" style={{ maxWidth: '220px' }}>
                     <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
                       <div className="h-8 border-l-2 border-dashed border-gray-300" />
                       <div className={`w-3 h-3 rounded-full ${isCentralMarker(index, timelineSteps.length) ? 'bg-cyan-400' : 'bg-gray-500'}`} />
                     </div>
-                  
                     <div className="mt-6 mb-6 flex justify-center">
-                      <div className="w-24 h-20 lg:w-32 lg:h-24 rounded-lg overflow-hidden border border-gray-200 relative">
-                        {index === 0 && (
-                          <img 
-                            src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=300&auto=format&fit=crop" 
-                            alt="Property to sell"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        {index === 1 && (
-                          <img 
-                            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=300&auto=format&fit=crop" 
-                            alt="Post property free button"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        {index === 2 && (
-                          <img 
-                            src="https://images.unsplash.com/photo-1434626881859-194d67b2b86f?q=80&w=300&auto=format&fit=crop" 
-                            alt="Enter property details"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        {index === 3 && (
-                          <img 
-                            src="https://images.unsplash.com/photo-1493396650640-2e11eebeac2b?q=80&w=300&auto=format&fit=crop" 
-                            alt="Upload property photos"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                        {index === 4 && (
-                          <img 
-                            src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=300&auto=format&fit=crop" 
-                            alt="Submit property ad"
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                      <div className="w-24 h-20 lg:w-32 lg:h-24 rounded-lg overflow-hidden border border-gray-200 relative bg-white">
+                        <img 
+                          src={step.image}
+                          alt={step.title}
+                          className="w-full h-full object-contain p-2"
+                        />
                       </div>
                     </div>
-                    
                     <div className="px-1">
-                      <h3 className="font-bold text-gray-900 mb-3 text-sm lg:text-base leading-tight">{step.title}</h3>
+                      <h3 className="font-bold text-gray-900 mb-3 text-xs lg:text-sm leading-tight">{step.title}</h3>
                       <p className="text-xs lg:text-sm text-gray-600 leading-relaxed">{step.description}</p>
                     </div>
                   </div>
@@ -192,57 +159,27 @@ export default function HelpSellPage() {
                 <div key={step.id} className="text-center relative">
                   <div className="relative mb-4">
                     <div 
-                      className="w-12 h-12 rounded-full mx-auto"
+                      className="w-12 h-12 rounded-full mx-auto flex items-center justify-center text-white"
                       style={{ backgroundColor: step.color }}
-                    />
+                    >
+                      {step.icon}
+                    </div>
                     {index < timelineSteps.length - 1 && (
                       <div className="absolute top-12 left-1/2 w-0.5 h-6 bg-gray-300 transform -translate-x-1/2" />
                     )}
                   </div>
-                  
                   <div className="mb-4 flex justify-center">
-                    <div className="w-24 h-18 rounded-lg overflow-hidden border border-gray-200 relative">
-                      {index === 0 && (
-                        <img 
-                          src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=200&auto=format&fit=crop" 
-                          alt="Property to sell"
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                      {index === 1 && (
-                        <img 
-                          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=200&auto=format&fit=crop" 
-                          alt="Post property free button"
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                      {index === 2 && (
-                        <img 
-                          src="https://images.unsplash.com/photo-1434626881859-194d67b2b86f?q=80&w=200&auto=format&fit=crop" 
-                          alt="Enter property details"
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                      {index === 3 && (
-                        <img 
-                          src="https://images.unsplash.com/photo-1493396650640-2e11eebeac2b?q=80&w=200&auto=format&fit=crop" 
-                          alt="Upload property photos"
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                      {index === 4 && (
-                        <img 
-                          src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=200&auto=format&fit=crop" 
-                          alt="Submit property ad"
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+                    <div className="w-24 h-20 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                      <img 
+                        src={step.image}
+                        alt={step.title}
+                        className="w-full h-full object-contain p-2"
+                      />
                     </div>
                   </div>
-                  
                   <div className="px-2">
-                    <h3 className="font-bold text-gray-900 mb-2 text-base">{step.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{step.description}</p>
+                    <h3 className="font-bold text-gray-900 mb-2 text-sm">{step.title}</h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">{step.description}</p>
                   </div>
                 </div>
               ))}

@@ -515,7 +515,7 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
                   marginBottom: 4,
                   color: '#1f2937'
                 }}>
-                  Enter your WhatsApp No. to get Contact Details of the Owner
+                  Enter your WhatsApp Number to get Contact Details of the Owner
                 </h3>
               </div>
             </div>
@@ -545,7 +545,7 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
-                  placeholder="Bobby"
+                  placeholder="Enter your name"
                 />
                 {!errors.name && formData.name && (
                   <Check 
@@ -591,7 +591,7 @@ export const ContactOwnerDialog: React.FC<Props> = ({ isOpen, onClose, ownerCont
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
-                  placeholder="bobby@gmail.com"
+                  placeholder="Enter your email"
                 />
                 {!errors.email && formData.email && validateEmail(formData.email) && (
                   <Check 

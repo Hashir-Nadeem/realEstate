@@ -3,14 +3,14 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, List, HelpCircle, Settings, User, LogOut } from 'lucide-react'
+import { Search, List, HelpCircle, CircleDollarSign, User, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 const tabs = [
   { name: "Search", icon: Search, href: "/" },
   { name: "List", icon: List, href: "/list" },
   { name: "Help", icon: HelpCircle, href: "/help" },
-  { name: "Services", icon: Settings, href: "/post-property" },
+  { name: "Services", icon: CircleDollarSign, href: "/advertising" },
 ]
 
 export const BottomNavigation = () => {
@@ -41,7 +41,7 @@ export const BottomNavigation = () => {
                   isActive ? "text-blue-600 bg-blue-50" : "text-gray-600 hover:text-gray-800"
                 }`}
               >
-                <Icon className="w-6 h-6 mb-1" />
+                <Icon className="w-6 h-6 mb-1 text-black" strokeWidth={1.75} />
                 <span className="text-xs font-medium">{tab.name}</span>
               </Link>
             )
@@ -55,7 +55,11 @@ export const BottomNavigation = () => {
                 isActive ? "text-blue-600 bg-blue-50" : "text-gray-600 hover:text-gray-800"
               }`}
             >
-              <Icon className="w-6 h-6 mb-1" />
+              {tab.name === 'Services' ? (
+                <Icon className="w-6 h-6 mb-1 text-black" strokeWidth={1.75} />
+              ) : (
+                <Icon className="w-6 h-6 mb-1" />
+              )}
               <span className="text-xs font-medium">{tab.name}</span>
             </Link>
           )

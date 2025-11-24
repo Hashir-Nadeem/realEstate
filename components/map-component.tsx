@@ -346,30 +346,17 @@ export default function MapComponent({
                   </div>
                   
                   <!-- Row 3: Details with icons - Flexible wrap layout -->
-                  <div style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-not oottom:8px; font-size:12px; color:#666;">
+                  <div style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:8px; font-size:12px; color:#666;">
                     <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2L22 22H2L12 2z"/>
-                        <path d="M12 8v6"/>
-                        <path d="M8 18h8"/>
-                      </svg>
+                      <img src="/icons/ruler.png" width="14" height="14" style="object-fit:contain" alt="Area" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='/icons/Ruler.svg';}" />
                       <span style="white-space:nowrap;">${areaDisplay}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/>
-                        <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/>
-                        <path d="M12 10v10"/>
-                        <path d="M2 14h20"/>
-                        <path d="M7 18h2"/>
-                        <path d="M15 18h2"/>
-                      </svg>
+                      <img src="/icons/bed.png" width="14" height="14" style="object-fit:contain" alt="Beds" />
                       <span style="white-space:nowrap;">${beds} Beds</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 11H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h5m0-7v7m0-7h5a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-5m0-7V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2Z"/>
-                      </svg>
+                      <img src="/icons/bath.png" width="14" height="14" style="object-fit:contain" alt="Baths" />
                       <span style="white-space:nowrap;">${baths} Baths</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
