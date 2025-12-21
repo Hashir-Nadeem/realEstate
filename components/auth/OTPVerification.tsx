@@ -133,9 +133,48 @@ export default function OTPVerification({ phone, onSuccess, onBack }: OTPVerific
     return seconds.toString().padStart(2, '0')
   }
 
-  const maskedPhone = phone.length > 6 
-    ? `+91-${phone.slice(-10, -6)}****${phone.slice(-4)}`
-    : phone
+  // Extract country code and format phone number properly
+  const formatPhoneWithMask = (phoneNumber: string) => {
+    // Remove any spaces or dashes for processing
+    const cleanPhone = phoneNumber.replace(/[\s-]/g, '')
+    
+    // If phone starts with +, extract country code
+    if (cleanPhone.startsWith('+')) {
+      // Find where the country code ends (typically 1-3 digits after +)
+      // Common patterns: +1 (US), +91 (India), +44 (UK), +86 (China), etc.
+      let countryCode = ''
+      let nationalNumber = ''
+      
+      // Try to match common country code patterns
+      if (cleanPhone.match(/^\+1\d{10}/)) {
+        // US/Canada: +1 followed by 10 digits
+        countryCode = '+1'
+        nationalNumber = cleanPhone.slice(2)
+      } else if (cleanPhone.match(/^\+\d{1,3}/)) {
+        // Other countries: extract 1-3 digit country code
+        const match = cleanPhone.match(/^\+(\d{1,3})(.+)/)
+        if (match) {
+          countryCode = '+' + match[1]
+          nationalNumber = match[2]
+        }
+      }
+      
+      // Mask the national number
+      if (nationalNumber.length > 6) {
+        const masked = `${countryCode}-${nationalNumber.slice(0, -6)}****${nationalNumber.slice(-4)}`
+        return masked
+      }
+      
+      return phoneNumber
+    }
+    
+    // If no country code, mask as before
+    return phoneNumber.length > 6 
+      ? `${phoneNumber.slice(0, -6)}****${phoneNumber.slice(-4)}`
+      : phoneNumber
+  }
+
+  const maskedPhone = formatPhoneWithMask(phone)
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
