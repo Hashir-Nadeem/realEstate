@@ -9,8 +9,8 @@ import { Card } from "@/components/ui/card"
 import { PostPropertyButton } from "@/components/ui/PostPropertyButton"
 import { useGeolocation } from "@/hooks/useGeolocation"
 import { useMapViewState, City } from "@/hooks/useMapViewState"
+import { useIsMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
-import AuthLoginCTA from '@/components/ui/AuthLoginCTA'
 
 // Dynamically import map to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
@@ -42,6 +42,7 @@ export default function HomePage() {
   const [showCityDropdown, setShowCityDropdown] = useState(false)
   const [initialLocationSet, setInitialLocationSet] = useState(false)
   const [isRecentering, setIsRecentering] = useState(false)
+  const isMobile = useIsMobile()
 
   const { 
     userLocation, 
@@ -182,12 +183,6 @@ export default function HomePage() {
                 ))}
               </Card>
             )}
-          </div>
-
-          {/* Login CTA (right of search, left of location) */}
-          <div className="flex-shrink-0">
-            {/* show login when not authenticated, otherwise show user's first name */}
-            <AuthLoginCTA />
           </div>
 
           {/* Current Location Button */}

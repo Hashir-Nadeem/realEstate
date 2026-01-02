@@ -107,20 +107,13 @@ export default function HelpSellPage() {
             <Link href="/help" className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </Link>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Help - Sell Property</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Sell Property</h1>
           </div>
           <p className="text-sm md:text-base text-gray-600 text-center">Complete guide to selling your property</p>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-28">
-        <div className="flex justify-end mb-8 md:mb-12">
-          <div className="bg-white border-2 border-black px-6 py-3 rounded-lg shadow-sm">
-            <h2 className="text-xl md:text-2xl font-bold text-black">
-              It is Free
-            </h2>
-          </div>
-        </div>
 
         <div className="bg-white rounded-lg shadow-sm p-4 md:p-8 mb-8">
           <div className="hidden md:block">

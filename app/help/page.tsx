@@ -14,13 +14,7 @@ export default function HelpPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-28">
-        <div className="flex justify-end mb-8 md:mb-12">
-          <div className="bg-white border-2 border-black px-6 py-3 rounded-lg shadow-sm">
-            <h2 className="text-xl md:text-2xl font-bold text-black">
-              It is Free
-            </h2>
-          </div>
-        </div>
+        
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           
