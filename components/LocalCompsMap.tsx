@@ -1,11 +1,15 @@
 "use client"
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from "react"
 
-interface Property {
-  id: number | string
-  lat?: number
-  lng?: number
+type Property = {
+  id?: number | string
+  _id?: number | string
+  propertyId?: number | string
+
+  lat?: number | string
+  lng?: number | string
+
   type?: string
   city?: string
   title?: string
@@ -25,7 +29,7 @@ interface Property {
 interface Props {
   centerProperty: Property
   properties: Property[]
-  onVisiblePropertiesChange?: (visibleProperties: Property[]) => void
+  onVisiblePropertiesChange?: (visible: Property[]) => void
 }
 
 declare global {
@@ -34,140 +38,176 @@ declare global {
   }
 }
 
-const LocalCompsMap: React.FC<Props> = ({ centerProperty, properties, onVisiblePropertiesChange }) => {
+const LocalCompsMap: React.FC<Props> = ({
+  centerProperty,
+  properties,
+  onVisiblePropertiesChange,
+}) => {
   const mapRef = useRef<any>(null)
-  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const leafletLoaded = useRef(false)
+
+  /* ================= LOAD LEAFLET ================= */
 
   useEffect(() => {
     const loadLeaflet = async () => {
       if (leafletLoaded.current) return
+
       if (!window.L) {
         if (!document.querySelector('link[href*="leaflet"]')) {
-          const link = document.createElement('link')
-          link.rel = 'stylesheet'
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          const link = document.createElement("link")
+          link.rel = "stylesheet"
+          link.href =
+            "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           document.head.appendChild(link)
         }
+
         await new Promise<void>((resolve) => {
-          const script = document.createElement('script')
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+          const script = document.createElement("script")
+          script.src =
+            "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           script.onload = () => resolve()
-          document.head.appendChild(script)
+          document.body.appendChild(script)
         })
       }
+
       leafletLoaded.current = true
-      initializeMap()
+      initMap()
     }
+
     loadLeaflet()
   }, [])
 
-  // Calculate city bounds based on center property
-  const getCityBounds = (centerLat: number, centerLng: number) => {
-    // Create a reasonable city boundary (approximately 15-20km radius)
-    const cityRadius = 0.15 // approximately 15-20km in degrees
-    return {
-      north: centerLat + cityRadius,
-      south: centerLat - cityRadius,
-      east: centerLng + cityRadius,
-      west: centerLng - cityRadius
-    }
-  }
+  /* ================= FILTER CITY ================= */
 
-  // Filter properties that are within the city bounds
-  const filterPropertiesInCity = (centerProperty: Property, allProperties: Property[]) => {
-    if (!centerProperty.lat || !centerProperty.lng) return []
-    
-    const bounds = getCityBounds(centerProperty.lat, centerProperty.lng)
-    
-    return allProperties.filter(property => {
-      if (!property.lat || !property.lng || property.id === centerProperty.id) return false
-      
+  const filterCityProperties = () => {
+    const centerLat = Number(centerProperty.lat)
+    const centerLng = Number(centerProperty.lng)
+
+    if (!centerLat || !centerLng) return []
+
+    const radius = 0.15
+
+    const north = centerLat + radius
+    const south = centerLat - radius
+    const east = centerLng + radius
+    const west = centerLng - radius
+
+    const centerId =
+      centerProperty.id ||
+      centerProperty._id ||
+      centerProperty.propertyId
+
+    return properties.filter((p) => {
+      const lat = Number(p.lat)
+      const lng = Number(p.lng)
+
+      if (!lat || !lng) return false
+
+      const pid = p.id || p._id || p.propertyId
+
+      if (String(pid) === String(centerId)) return false
+
       return (
-        property.lat >= bounds.south &&
-        property.lat <= bounds.north &&
-        property.lng >= bounds.west &&
-        property.lng <= bounds.east &&
-        property.city === centerProperty.city // Also filter by city name if available
+        lat >= south &&
+        lat <= north &&
+        lng >= west &&
+        lng <= east &&
+        (!centerProperty.city ||
+          p.city === centerProperty.city)
       )
     })
   }
 
-  const initializeMap = () => {
-    if (!mapContainerRef.current || !window.L || mapRef.current || !centerProperty.lat || !centerProperty.lng) {
-      return
-    }
+  /* ================= INIT MAP ================= */
+
+  const initMap = () => {
+    if (!containerRef.current || !window.L) return
+
+    const centerLat = Number(centerProperty.lat)
+    const centerLng = Number(centerProperty.lng)
+
+    if (!centerLat || !centerLng) return
+
+    mapRef.current?.remove()
 
     const L = window.L
-    
-    // Filter properties to only show those in the same city
-    const cityProperties = filterPropertiesInCity(centerProperty, properties)
-    
-    // Notify parent component about visible properties
-    if (onVisiblePropertiesChange) {
-      onVisiblePropertiesChange(cityProperties)
-    }
 
-    // Create map with higher zoom level to focus on city area
-    const map = L.map(mapContainerRef.current, {
+    const cityProperties = filterCityProperties()
+
+    onVisiblePropertiesChange?.(cityProperties)
+
+    const map = L.map(containerRef.current, {
       zoomControl: false,
       attributionControl: false,
-    }).setView([centerProperty.lat, centerProperty.lng], 14) // Increased zoom from 12 to 14
+    }).setView([centerLat, centerLng], 14)
 
     mapRef.current = map
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    ).addTo(map)
+
+    const createIcon = (color: string) =>
+      L.divIcon({
+        html: `<div style="background:${color};width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white"></div>`,
+        className: "",
+        iconSize: [24, 24],
+        iconAnchor: [12, 24],
+      })
+
+    L.marker([centerLat, centerLng], {
+      icon: createIcon("#3B82F6"),
     }).addTo(map)
 
-    const createIcon = (color: string) => L.divIcon({
-      html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center;"><div style="width: 12px; height: 12px; background-image: url('/icons/home.svg'); background-size: contain; transform: rotate(45deg);"></div></div>`,
-      className: '',
-      iconSize: [24, 24],
-      iconAnchor: [12, 24],
-    })
+    if (cityProperties.length) {
+      const bounds = L.latLngBounds([
+        centerLat,
+        centerLng,
+      ])
 
-    // Add marker for the center property (blue)
-    L.marker([centerProperty.lat, centerProperty.lng], { icon: createIcon('#3B82F6') }).addTo(map)
+      cityProperties.forEach((p) => {
+        const lat = Number(p.lat)
+        const lng = Number(p.lng)
 
-    // Add markers only for properties in the same city (green)
-    if (cityProperties.length > 0) {
-      const bounds = L.latLngBounds([centerProperty.lat, centerProperty.lng])
-      
-      cityProperties.forEach(p => {
-        if (p.lat && p.lng) {
-          L.marker([p.lat, p.lng], { icon: createIcon('#10B981') }).addTo(map)
-          bounds.extend([p.lat, p.lng])
-        }
+        if (!lat || !lng) return
+
+        L.marker([lat, lng], {
+          icon: createIcon("#10B981"),
+        }).addTo(map)
+
+        bounds.extend([lat, lng])
       })
 
-      // Fit map to bounds with more padding to keep focus on city area
-      map.fitBounds(bounds, { 
+      map.fitBounds(bounds, {
         padding: [30, 30],
-        maxZoom: 15 // Limit max zoom to keep city-level view
+        maxZoom: 15,
       })
-    } else {
-      // If no nearby properties, just set a reasonable city-level zoom
-      map.setZoom(14)
     }
   }
 
+  /* ================= REINIT ================= */
+
   useEffect(() => {
     if (leafletLoaded.current) {
-      initializeMap()
+      initMap()
     }
+
     return () => {
-      if (mapRef.current) {
-        mapRef.current.remove()
-        mapRef.current = null
-      }
+      mapRef.current?.remove()
+      mapRef.current = null
     }
   }, [centerProperty, properties])
 
   return (
     <div className="w-full p-4">
-      <h3 className="text-lg font-medium text-gray-900 mb-3">Local Comps</h3>
-      <div ref={mapContainerRef} className="w-full h-96 rounded-lg" />
+      <h3 className="text-lg font-medium mb-3">
+        Local Comps
+      </h3>
+      <div
+        ref={containerRef}
+        className="w-full h-96 rounded-lg"
+      />
     </div>
   )
 }

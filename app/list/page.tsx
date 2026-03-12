@@ -5,63 +5,163 @@ import Link from "next/link"
 import { generatePropertyPopupContent } from "@/components/map/PropertyPopupContent"
 import { ListPageHeader } from "@/components/ListPageHeader"
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL!
+
 export default function ListPage() {
   const [properties, setProperties] = useState<any[]>([])
   const [filteredProperties, setFilteredProperties] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Filter states
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+
   const [city, setCity] = useState("Hyderabad")
   const [locality, setLocality] = useState("All")
   const [saleRentFilter, setSaleRentFilter] = useState("all")
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string[]>([])
 
+  // ⭐ IMAGE URL FIX FUNCTION
+  const buildImageUrl = (img: string) => {
+    if (!img) return "/no-image.png"
+
+    if (img.startsWith("http")) return img
+
+    if (img.startsWith("/"))
+      return `${API_BASE}${img}`
+
+    return `${API_BASE}/${img}`
+  }
+
   useEffect(() => {
     const fetchProperties = async () => {
       setIsLoading(true)
+
       try {
-        const res = await fetch("/api/properties")
+        const res = await fetch(
+          `${API_BASE}/properties?page=1&pageSize=100`
+        )
+
+        if (!res.ok) throw new Error("Failed to fetch")
+
         const data = await res.json()
-        setProperties(data || [])
-      } catch (error) {
-        console.error("Failed to fetch properties:", error)
+
+        let raw: any[] = []
+
+        if (Array.isArray(data)) raw = data
+        else if (data.items) raw = data.items
+        else if (data.data) raw = data.data
+
+        const list = raw.map((p: any) => {
+          const imagesRaw = p.images || p.photos || []
+
+          const fixedImages = imagesRaw.map((img: string) =>
+            buildImageUrl(img)
+          )
+
+          return {
+            ...p,
+
+            type:
+              p.type ||
+              p.propertyCategory ||
+              p.purpose ||
+              "sale",
+
+            city:
+              p.city ||
+              p.address?.city ||
+              "Hyderabad",
+
+            locality:
+              p.locality ||
+              p.address?.area ||
+              "Default",
+
+            title:
+              p.title ||
+              p.propertyTitle ||
+              "Property",
+
+            price:
+              p.price ||
+              p.amount ||
+              0,
+
+            images: fixedImages.length
+              ? fixedImages
+              : ["/no-image.png"],
+          }
+        })
+
+        setProperties(list)
+        setFilteredProperties(list)
+
+      } catch (err) {
+        console.error(err)
       } finally {
         setIsLoading(false)
       }
     }
+
     fetchProperties()
   }, [])
 
   useEffect(() => {
+    if (isInitialLoad) {
+      setFilteredProperties(properties)
+      return
+    }
+
     let result = properties
 
-    // Filter by city
     if (city) {
-      result = result.filter(p => p.city === city)
+      result = result.filter(
+        p => p.city?.toLowerCase() === city.toLowerCase()
+      )
     }
 
-    // Filter by locality
     if (locality !== "All") {
-      result = result.filter(p => p.locality === locality)
+      result = result.filter(
+        p => p.locality?.toLowerCase() === locality.toLowerCase()
+      )
     }
 
-    // Filter by sale/rent
     if (saleRentFilter !== "all") {
       if (saleRentFilter === "sale") {
-        result = result.filter(p => p.type.startsWith("sale"))
+        result = result.filter(p => p.type?.startsWith("sale"))
       } else {
         result = result.filter(p => p.type === "rental")
       }
     }
 
-    // Filter by property type (
-    // r sale properties)
     if (saleRentFilter === "sale" && propertyTypeFilter.length > 0) {
-      result = result.filter(p => propertyTypeFilter.includes(p.type))
+      result = result.filter(p =>
+        propertyTypeFilter.includes(p.type)
+      )
     }
 
     setFilteredProperties(result)
-  }, [properties, city, locality, saleRentFilter, propertyTypeFilter])
+
+  }, [properties, city, locality, saleRentFilter, propertyTypeFilter, isInitialLoad])
+
+  const handleCityChange = (value: string) => {
+    setIsInitialLoad(false)
+    setCity(value)
+  }
+
+  const handleLocalityChange = (value: string) => {
+    setIsInitialLoad(false)
+    setLocality(value)
+  }
+
+  const handleSaleRentChange = (value: string) => {
+    setIsInitialLoad(false)
+    setSaleRentFilter(value)
+  }
+
+  const handlePropertyTypeChange = (value: string[]) => {
+    setIsInitialLoad(false)
+    setPropertyTypeFilter(value)
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -70,11 +170,12 @@ export default function ListPage() {
         locality={locality}
         saleRentFilter={saleRentFilter}
         propertyTypeFilter={propertyTypeFilter}
-        onCityChange={setCity}
-        onLocalityChange={setLocality}
-        onSaleRentChange={setSaleRentFilter}
-        onPropertyTypeChange={setPropertyTypeFilter}
+        onCityChange={handleCityChange}
+        onLocalityChange={handleLocalityChange}
+        onSaleRentChange={handleSaleRentChange}
+        onPropertyTypeChange={handlePropertyTypeChange}
       />
+
       <main className="flex-grow container mx-auto py-6 px-4 pb-28">
         {isLoading ? (
           <div className="text-center text-gray-500">Loading properties...</div>

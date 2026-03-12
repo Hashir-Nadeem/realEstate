@@ -137,7 +137,7 @@ const login = async (
     localStorage.setItem("accessToken", result.accessToken);
     localStorage.setItem("refreshToken", result.refreshToken);
     localStorage.setItem("user", JSON.stringify(result.user));
-
+    
     setUser(result.user);
     setIsAuthenticated(true);
 

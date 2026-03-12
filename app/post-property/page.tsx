@@ -11,8 +11,8 @@ import { useMapViewState } from "@/hooks/useMapViewState"
 import { useCityLocality } from "@/hooks/useCityLocality"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useRouter } from "next/navigation"
-import { Footer } from "@/components/ui/Footer"
 import { useAuth } from "@/contexts/AuthContext"
+import { apiRequest } from "@/lib/api"
 
 const MapSelector = dynamic(() => import("@/components/map-selector"), {
   ssr: false,
@@ -400,87 +400,114 @@ export default function PostPropertyPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Redirect to login if not authenticated
-    if (!isAuthenticated) {
-      router.push('/login?redirect=/post-property')
-      return
-    }
-    
-    setSubmitMessage(null)
-    setIsSubmitting(true)
+  e.preventDefault()
 
-    // Validation for custom city/locality
-    if (useCustomLocation) {
-      if (!formData.customCity.trim() || !formData.customLocality.trim()) {
-        setSubmitMessage("Please fill in both custom city and locality fields.")
-        setIsSubmitting(false)
-        return
-      }
-    } else {
-      if (!formData.city || !formData.locality) {
-        setSubmitMessage("Please select both city and locality from dropdowns.")
-        setIsSubmitting(false)
-        return
-      }
-    }
+  if (!isAuthenticated) {
+    router.push('/login?redirect=/post-property')
+    return
+  }
 
-    try {
-      // 1) upload images first (if any)
-      let uploadedUrls: string[] = []
-      if (formData.photos && formData.photos.length > 0) {
-        const fd = new FormData()
-        formData.photos.forEach((f) => fd.append("photos", f))
-        const uploadRes = await fetch("/api/upload-images", {
-          method: "POST",
-          body: fd,
-        })
-        if (!uploadRes.ok) {
-          throw new Error("Image upload failed")
-        }
-        const uploadJson = await uploadRes.json()
-        uploadedUrls = uploadJson.files || []
-      }
+  setSubmitMessage(null)
+  setIsSubmitting(true)
 
-      const payload = {
-        // include uploadedImages (URLs) and clear file objects before sending JSON
-        formData: {
-          ...formData,
-          // Use custom city/locality if checkbox is checked, otherwise use dropdown values
-          city: useCustomLocation ? formData.customCity : formData.city,
-          locality: useCustomLocation ? formData.customLocality : formData.locality,
-          uploadedImages: uploadedUrls,
-          photos: [], // don't send File objects
-        },
-        location: selectedLocation || null,
-        submittedAt: new Date().toISOString(),
-      }
-
-      const res = await fetch("/api/save-property", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || "Failed to save submission")
-      }
-
-      setSubmitMessage("Saved locally ✅")
-
-      // navigate back to home so map fetches updated properties
-      router.push("/")
-      return
-
-    } catch (err: any) {
-      console.error("Submit error:", err)
-      setSubmitMessage("Failed to save locally. See console.")
-    } finally {
+  // Validation for custom city/locality
+  if (useCustomLocation) {
+    if (!formData.customCity.trim() || !formData.customLocality.trim()) {
+      setSubmitMessage("Please fill in both custom city and locality fields.")
       setIsSubmitting(false)
+      return
+    }
+  } else {
+    if (!formData.city || !formData.locality) {
+      setSubmitMessage("Please select both city and locality from dropdowns.")
+      setIsSubmitting(false)
+      return
     }
   }
+
+  try {
+    // 1️⃣ Upload images first (if any)
+    let uploadedUrls: string[] = []
+
+    if (formData.photos && formData.photos.length > 0) {
+      const fd = new FormData()
+      formData.photos.forEach((f) => fd.append("photos", f))
+
+      const uploadRes = await fetch("/api/upload-images", {
+        method: "POST",
+        body: fd,
+      })
+
+      if (!uploadRes.ok) {
+        throw new Error("Image upload failed")
+      }
+
+      const uploadJson = await uploadRes.json()
+      uploadedUrls = uploadJson.files || []
+    }
+    // 2️⃣ Prepare payload for .NET API
+   const payload = {
+  formData: {
+    UserId: '234',
+    propertyCategory: formData.propertyCategory,
+    youAreHereTo: formData.youAreHereTo,
+    title: formData.title,
+    description: formData.description,
+
+    // 🔥 IMPORTANT: convert to correct numeric types
+    price: Number(formData.price),
+    priceUnit: formData.priceUnit,
+
+    area: Number(formData.area),
+    areaUnit: formData.areaUnit,
+
+    bedrooms: formData.bedrooms,
+    bathrooms: formData.bathrooms,
+    facing: formData.facing,
+    floorNumber: formData.floorNumber,
+    totalFloors: formData.totalFloors,
+
+    fullAddress: formData.fullAddress,
+    city: useCustomLocation
+      ? formData.customCity
+      : formData.city,
+    locality: useCustomLocation
+      ? formData.customLocality
+      : formData.locality,
+
+    contactPersonName: formData.contactPersonName,
+    email: formData.email,
+    whatsapp: formData.whatsapp,
+
+    uploadedImages: uploadedUrls || [],
+  },
+
+  location: selectedLocation
+    ? {
+        lat: selectedLocation.lat,
+        lng: selectedLocation.lng,
+      }
+    : null,
+
+  submittedAt: new Date().toISOString(),
+}
+
+    // 3️⃣ Send to .NET backend using apiRequest
+    await apiRequest("/properties", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+
+    setSubmitMessage("Property submitted successfully ✅")
+    router.push("/")
+
+  } catch (err: any) {
+    console.error("Submit error:", err)
+    setSubmitMessage(err.message || "Failed to submit property.")
+  } finally {
+    setIsSubmitting(false)
+  }
+}
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
     setSelectedLocation(location)

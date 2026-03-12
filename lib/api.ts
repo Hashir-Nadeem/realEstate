@@ -11,10 +11,11 @@ export async function apiRequest<T>(
     ...options,
   });
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => null);
-    throw new Error(error?.message || "Something went wrong");
-  }
+if (!res.ok) {
+  const errorText = await res.text()
+  console.error("API ERROR:", errorText)
+  throw new Error(errorText)
+}
 
   return res.json();
 }
