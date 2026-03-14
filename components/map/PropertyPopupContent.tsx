@@ -4,46 +4,47 @@ interface Property {
   images?: (string | null)[]
   photos?: (string | null)[]
   uploadedImages?: (string | null)[]
-  title: string
+  title?: string
+
   beds?: number | string
   baths?: number | string
+
+  bedrooms?: number | string
+  bathrooms?: number | string
+  bhk?: number | string
+
   area?: string
   sqft?: number
+
   address?: string
-  floorNumber?: string
-  totalFloors?: string
-  facing?: string
   locality?: string
   city?: string
-  type: string
-  price: string | number
+
+  type?: string
+  price?: string | number
+  amount?: string | number
+  expectedPrice?: string | number
 }
 
 export const generatePropertyPopupContent = (
   property: Property
 ): string => {
 
-  const sanitize = (val?: string | null) => {
-    if (!val) return null
+  const sanitize = (val?: any) => {
+    if (!val && val !== 0) return null
     if (val === "null" || val === "undefined") return null
-    if (val === "/no-image.png") return null
-    return val.trim()
+    return String(val)
   }
 
-  // ⭐ IMPORTANT — LOAD ONLY THROUGH NEXT PUBLIC
+  // ⭐ IMAGE BUILDER
   const buildImageUrl = (img?: string | null) => {
     const clean = sanitize(img)
-
     if (!clean) return "/placeholder.jpg"
-
     if (clean.startsWith("http")) return clean
-
-    // images already inside /public/uploads
     return clean.startsWith("/") ? clean : `/${clean}`
   }
 
   const pickImage = (): string => {
-
     const candidates = [
       property.uploadedImages?.[0],
       property.imageUrl,
@@ -53,16 +54,46 @@ export const generatePropertyPopupContent = (
 
     for (const c of candidates) {
       const valid = sanitize(c)
-      if (valid) {
-        return buildImageUrl(valid)
-      }
+      if (valid) return buildImageUrl(valid)
     }
 
     return "/placeholder.jpg"
   }
 
   const img = pickImage()
-const popupContent = `
+
+  // ⭐ PRICE DETECTOR (INR FORMAT)
+  const rawPrice =
+    property.price ??
+    property.amount ??
+    property.expectedPrice ??
+    0
+
+  const priceFormatted =
+    rawPrice
+      ? `₹ ${Number(rawPrice).toLocaleString("en-IN")}`
+      : "₹ 0"
+
+  // ⭐ BEDS DETECTOR
+  const beds =
+    property.beds ??
+    property.bedrooms ??
+    property.bhk ??
+    "--"
+
+  // ⭐ BATHS DETECTOR
+  const baths =
+    property.baths ??
+    property.bathrooms ??
+    "--"
+
+  // ⭐ LOCATION DETECTOR
+  const location =
+    property.address ||
+    `${property.locality || ""}${property.city ? ", " + property.city : ""}` ||
+    "Location"
+
+  const popupContent = `
 <div style="
   width:280px;
   background:#ffffff;
@@ -74,9 +105,8 @@ const popupContent = `
   transition:0.25s;
 ">
 
-  <div onclick="window.propertyDetailsHandler('${property.id}')">
+  <div>
 
-    <!-- IMAGE -->
     <div style="position:relative;height:170px;background:#f1f3f6">
       <img 
         src="${img}" 
@@ -85,7 +115,6 @@ const popupContent = `
         onerror="this.onerror=null;this.src='/placeholder.jpg'"
       />
 
-      <!-- TYPE BADGE -->
       <div style="
         position:absolute;
         top:10px;
@@ -96,44 +125,38 @@ const popupContent = `
         border-radius:20px;
         font-size:11px;
         font-weight:600;
-        letter-spacing:.3px;
       ">
-        ${property.type?.toUpperCase() || "PROPERTY"}
+        ${(property.type || "Property").toUpperCase()}
       </div>
     </div>
 
-    <!-- CONTENT -->
     <div style="padding:14px 16px">
 
-      <!-- PRICE -->
       <div style="
         font-size:20px;
         font-weight:700;
         color:#111;
         margin-bottom:6px;
       ">
-        ₹ ${property.price}
+        ${priceFormatted}
       </div>
 
-      <!-- TITLE / BEDS -->
       <div style="
         font-size:13px;
         color:#444;
         font-weight:600;
         margin-bottom:8px;
       ">
-        ${property.beds || "--"} Beds • ${property.baths || "--"} Baths
+        ${beds} Beds • ${baths} Baths
         ${property.sqft ? " • " + property.sqft + " sqft" : ""}
       </div>
 
-      <!-- LOCATION -->
       <div style="
         font-size:13px;
         color:#777;
         line-height:1.4;
       ">
-        ${property.locality || ""}
-        ${property.city ? ", " + property.city : ""}
+        ${location}
       </div>
 
     </div>
@@ -141,5 +164,6 @@ const popupContent = `
   </div>
 </div>
 `
+
   return popupContent
 }

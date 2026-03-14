@@ -11,6 +11,12 @@
   }
 }
 
+.bg-red{
+  background-color: red;
+}
+.bg-green{
+  background-color: green;
+}
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -11,7 +11,6 @@ export default function ListPage() {
   const [properties, setProperties] = useState<any[]>([])
   const [filteredProperties, setFilteredProperties] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   const [city, setCity] = useState("Hyderabad")
@@ -19,16 +18,16 @@ export default function ListPage() {
   const [saleRentFilter, setSaleRentFilter] = useState("all")
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string[]>([])
 
-  // ⭐ IMAGE URL FIX FUNCTION
   const buildImageUrl = (img: string) => {
     if (!img) return "/no-image.png"
-
     if (img.startsWith("http")) return img
-
-    if (img.startsWith("/"))
-      return `${API_BASE}${img}`
-
+    if (img.startsWith("/")) return `${API_BASE}${img}`
     return `${API_BASE}/${img}`
+  }
+
+  const formatPrice = (price: number) => {
+    if (!price) return 0
+    return Number(price)
   }
 
   useEffect(() => {
@@ -57,8 +56,29 @@ export default function ListPage() {
             buildImageUrl(img)
           )
 
+          const beds =
+            p.beds ??
+            p.bedrooms ??
+            p.noOfBedrooms ??
+            p.bhk ??
+            0
+
+          const baths =
+            p.baths ??
+            p.bathrooms ??
+            p.noOfBathrooms ??
+            0
+
+          const price =
+            p.price ||
+            p.amount ||
+            p.expectedPrice ||
+            0
+
           return {
             ...p,
+
+            id: p.id || p._id,
 
             type:
               p.type ||
@@ -69,22 +89,28 @@ export default function ListPage() {
             city:
               p.city ||
               p.address?.city ||
-              "Hyderabad",
+              "",
 
             locality:
               p.locality ||
               p.address?.area ||
-              "Default",
+              "",
 
             title:
               p.title ||
               p.propertyTitle ||
+              p.projectName ||
               "Property",
 
-            price:
-              p.price ||
-              p.amount ||
-              0,
+            price: formatPrice(price),
+
+            beds,
+            baths,
+
+            address:
+              p.address?.fullAddress ||
+              p.address?.line1 ||
+              `${p.locality || ""} ${p.city || ""}`,
 
             images: fixedImages.length
               ? fixedImages
@@ -94,7 +120,6 @@ export default function ListPage() {
 
         setProperties(list)
         setFilteredProperties(list)
-
       } catch (err) {
         console.error(err)
       } finally {
@@ -129,7 +154,9 @@ export default function ListPage() {
       if (saleRentFilter === "sale") {
         result = result.filter(p => p.type?.startsWith("sale"))
       } else {
-        result = result.filter(p => p.type === "rental")
+        result = result.filter(
+          p => p.type === "rent" || p.type === "rental"
+        )
       }
     }
 
@@ -140,28 +167,14 @@ export default function ListPage() {
     }
 
     setFilteredProperties(result)
-
-  }, [properties, city, locality, saleRentFilter, propertyTypeFilter, isInitialLoad])
-
-  const handleCityChange = (value: string) => {
-    setIsInitialLoad(false)
-    setCity(value)
-  }
-
-  const handleLocalityChange = (value: string) => {
-    setIsInitialLoad(false)
-    setLocality(value)
-  }
-
-  const handleSaleRentChange = (value: string) => {
-    setIsInitialLoad(false)
-    setSaleRentFilter(value)
-  }
-
-  const handlePropertyTypeChange = (value: string[]) => {
-    setIsInitialLoad(false)
-    setPropertyTypeFilter(value)
-  }
+  }, [
+    properties,
+    city,
+    locality,
+    saleRentFilter,
+    propertyTypeFilter,
+    isInitialLoad,
+  ])
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -170,31 +183,42 @@ export default function ListPage() {
         locality={locality}
         saleRentFilter={saleRentFilter}
         propertyTypeFilter={propertyTypeFilter}
-        onCityChange={handleCityChange}
-        onLocalityChange={handleLocalityChange}
-        onSaleRentChange={handleSaleRentChange}
-        onPropertyTypeChange={handlePropertyTypeChange}
+        onCityChange={setCity}
+        onLocalityChange={setLocality}
+        onSaleRentChange={setSaleRentFilter}
+        onPropertyTypeChange={setPropertyTypeFilter}
       />
 
       <main className="flex-grow container mx-auto py-6 px-4 pb-28">
         {isLoading ? (
-          <div className="text-center text-gray-500">Loading properties...</div>
+          <div className="text-center text-gray-500">
+            Loading properties...
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {filteredProperties.length > 0 ? (
               filteredProperties.map(property => (
-                <Link key={property.id} href={`/property/${property.id}`} className="block">
+                <Link
+                  key={property.id}
+                  href={`/property/${property.id}`}
+                  className="block"
+                >
                   <div
                     dangerouslySetInnerHTML={{
-                      __html: generatePropertyPopupContent(property, { showCloseButton: false }),
+                      __html:
+                        generatePropertyPopupContent(property),
                     }}
                   />
                 </Link>
               ))
             ) : (
               <div className="col-span-full text-center py-12 text-gray-500">
-                <h2 className="text-xl font-semibold">No properties found</h2>
-                <p>Try adjusting your filters to see more results.</p>
+                <h2 className="text-xl font-semibold">
+                  No properties found
+                </h2>
+                <p>
+                  Try adjusting your filters to see more results.
+                </p>
               </div>
             )}
           </div>
