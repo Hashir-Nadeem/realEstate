@@ -11,7 +11,7 @@ export default function ListPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   // Filters
-  const [city, setCity] = useState("Hyderabad")
+  const [city, setCity] = useState("Delhi")
   const [locality, setLocality] = useState("All")
   const [saleRentFilter, setSaleRentFilter] = useState("all")
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string[]>([])
