@@ -5,176 +5,70 @@ import Link from "next/link"
 import { generatePropertyPopupContent } from "@/components/map/PropertyPopupContent"
 import { ListPageHeader } from "@/components/ListPageHeader"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL!
-
 export default function ListPage() {
   const [properties, setProperties] = useState<any[]>([])
   const [filteredProperties, setFilteredProperties] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
+  // Filters
   const [city, setCity] = useState("Hyderabad")
   const [locality, setLocality] = useState("All")
   const [saleRentFilter, setSaleRentFilter] = useState("all")
   const [propertyTypeFilter, setPropertyTypeFilter] = useState<string[]>([])
 
-  const buildImageUrl = (img: string) => {
-    if (!img) return "/no-image.png"
-    if (img.startsWith("http")) return img
-    if (img.startsWith("/")) return `${API_BASE}${img}`
-    return `${API_BASE}/${img}`
-  }
-
-  const formatPrice = (price: number) => {
-    if (!price) return 0
-    return Number(price)
-  }
-
-  useEffect(() => {
-    const fetchProperties = async () => {
+  // ✅ Fetch from API
+ useEffect(() => {
+  const fetchProperties = async () => {
+    try {
       setIsLoading(true)
 
-      try {
-        const res = await fetch(
-          `${API_BASE}/properties?page=1&pageSize=100`
-        )
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/properties`,
+        { cache: "no-store" }
+      )
 
-        if (!res.ok) throw new Error("Failed to fetch")
+      if (!res.ok) throw new Error("Failed to fetch")
 
-        const data = await res.json()
+      const data = await res.json()
 
-        let raw: any[] = []
-
-        if (Array.isArray(data)) raw = data
-        else if (data.items) raw = data.items
-        else if (data.data) raw = data.data
-
-        const list = raw.map((p: any) => {
-          const imagesRaw = p.images || p.photos || []
-
-          const fixedImages = imagesRaw.map((img: string) =>
-            buildImageUrl(img)
-          )
-
-          const beds =
-            p.beds ??
-            p.bedrooms ??
-            p.noOfBedrooms ??
-            p.bhk ??
-            0
-
-          const baths =
-            p.baths ??
-            p.bathrooms ??
-            p.noOfBathrooms ??
-            0
-
-          const price =
-            p.price ||
-            p.amount ||
-            p.expectedPrice ||
-            0
-
-          return {
-            ...p,
-
-            id: p.id || p._id,
-
-            type:
-              p.type ||
-              p.propertyCategory ||
-              p.purpose ||
-              "sale",
-
-            city:
-              p.city ||
-              p.address?.city ||
-              "",
-
-            locality:
-              p.locality ||
-              p.address?.area ||
-              "",
-
-            title:
-              p.title ||
-              p.propertyTitle ||
-              p.projectName ||
-              "Property",
-
-            price: formatPrice(price),
-
-            beds,
-            baths,
-
-            address:
-              p.address?.fullAddress ||
-              p.address?.line1 ||
-              `${p.locality || ""} ${p.city || ""}`,
-
-            images: fixedImages.length
-              ? fixedImages
-              : ["/no-image.png"],
-          }
-        })
-
-        setProperties(list)
-        setFilteredProperties(list)
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setIsLoading(false)
-      }
+      setProperties(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error("Properties API error:", err)
+      setProperties([])
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    fetchProperties()
-  }, [])
+  fetchProperties()
+}, [])
 
+  // ✅ Filtering Logic
   useEffect(() => {
-    if (isInitialLoad) {
-      setFilteredProperties(properties)
-      return
-    }
-
-    let result = properties
+    let result = [...properties]
 
     if (city) {
-      result = result.filter(
-        p => p.city?.toLowerCase() === city.toLowerCase()
-      )
+      result = result.filter(p => p.city === city)
     }
 
     if (locality !== "All") {
-      result = result.filter(
-        p => p.locality?.toLowerCase() === locality.toLowerCase()
-      )
+      result = result.filter(p => p.locality === locality)
     }
 
     if (saleRentFilter !== "all") {
       if (saleRentFilter === "sale") {
         result = result.filter(p => p.type?.startsWith("sale"))
       } else {
-        result = result.filter(
-          p => p.type === "rent" || p.type === "rental"
-        )
+        result = result.filter(p => p.type === "rental")
       }
     }
 
     if (saleRentFilter === "sale" && propertyTypeFilter.length > 0) {
-      result = result.filter(p =>
-        propertyTypeFilter.includes(p.type)
-      )
+      result = result.filter(p => propertyTypeFilter.includes(p.type))
     }
 
     setFilteredProperties(result)
-  }, [
-    properties,
-    city,
-    locality,
-    saleRentFilter,
-    propertyTypeFilter,
-    isInitialLoad,
-  ])
+  }, [properties, city, locality, saleRentFilter, propertyTypeFilter])
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -203,22 +97,17 @@ export default function ListPage() {
                   href={`/property/${property.id}`}
                   className="block"
                 >
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        generatePropertyPopupContent(property),
-                    }}
-                  />
+                 <div
+  dangerouslySetInnerHTML={{
+    __html: generatePropertyPopupContent(property),
+  }}
+/>
                 </Link>
               ))
             ) : (
               <div className="col-span-full text-center py-12 text-gray-500">
-                <h2 className="text-xl font-semibold">
-                  No properties found
-                </h2>
-                <p>
-                  Try adjusting your filters to see more results.
-                </p>
+                <h2 className="text-xl font-semibold">No properties found</h2>
+                <p>Try adjusting your filters to see more results.</p>
               </div>
             )}
           </div>
