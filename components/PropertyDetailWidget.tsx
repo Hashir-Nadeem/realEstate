@@ -1,89 +1,210 @@
 "use client"
 
-import { useState } from "react"
-import { Bath, Bed, Ruler, MapPin, Layers, Compass } from "lucide-react"
+import React, { useState } from "react"
 import ContactOwnerDialog from "./ContactOwnerDialog"
 
-const PropertyDetailWidget = ({ property }: any) => {
+interface Property {
+  id: number | string
+
+  // normalized payload
+  title?: string
+  price?: any
+  address?: string
+  beds?: number
+  baths?: number
+  area?: string
+  floorNumber?: string
+  totalFloors?: string
+  facing?: string
+  city?: string
+  locality?: string
+  type?: string
+  propertyCategory?: string
+
+  // raw api payload
+  bedrooms?: any
+  bathrooms?: any
+  areaUnit?: string
+  fullAddress?: string
+  priceUnit?: string
+  youAreHereTo?: string
+  whatsapp?: any
+  phone?: any
+  contactPhone?: any
+}
+
+interface Props {
+  property: Property
+}
+
+export const PropertyDetailWidget: React.FC<Props> = ({ property }) => {
+
+  // ⭐ DEBUGGER
+  console.log("✅ WIDGET PROPERTY =", property)
+
+  if (!property) return null
+
+  const beds =
+    property.beds ??
+    (property.bedrooms ? Number(property.bedrooms) : undefined)
+
+  const baths =
+    property.baths ??
+    (property.bathrooms ? Number(property.bathrooms) : undefined)
+
+  const area =
+    property.area ||
+    ((property as any).area && property.areaUnit
+      ? `${(property as any).area} ${property.areaUnit}`
+      : "")
+
+  const address =
+    property.address ||
+    property.fullAddress ||
+    ""
+
+  const city = property.city || ""
+  const locality = property.locality || ""
+
+  const price =
+    property.price
+      ? typeof property.price === "string"
+        ? property.price
+        : `₹ ${Number(property.price).toLocaleString()} ${
+            property.priceUnit ? `/ ${property.priceUnit}` : ""
+          }`
+      : ""
+
+  const type =
+    property.type ||
+    (property.youAreHereTo === "rental"
+      ? "rental"
+      : property.propertyCategory
+      ? `sale-${property.propertyCategory}`
+      : "")
+
   const [open, setOpen] = useState(false)
 
   return (
-    <div>
+    <div className="w-full pt-4 pb-4 pl-4 pr-4">
+      <div className="bg-white rounded-md">
+        <div style={{ padding: 12 }}>
 
-      <div className="mb-5">
-        <h2 className="text-2xl font-bold text-gray-900">{property.title}</h2>
+          {/* TITLE */}
+          <div style={{ marginBottom: 6 }}>
+            <span style={{ color:'#333', fontSize:14, fontWeight:600 }}>
+              {beds ? `${beds} BHK` : ""} Flat FOR {(type || "").includes("sale") ? "SALE" : "RENT"}
+              {locality ? ` in ${locality}` : ""}
+              {city ? `, ${city}` : ""}
+            </span>
+          </div>
 
-        <div className="text-3xl font-extrabold text-red-600 mt-2">
-          ₹ {property.price} {property.priceUnit}
+          {/* PRICE */}
+          {price && (
+            <div style={{ marginBottom:10 }}>
+              <span style={{ color:"#000", fontSize:18, fontWeight:700 }}>
+                {price}
+              </span>
+            </div>
+          )}
+
+          {/* DETAILS */}
+          <div style={{ display:"flex", flexWrap:"wrap", gap:"8px 12px", marginBottom:8, fontSize:12, color:"#666" }}>
+
+            {area && (
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <img src="/icons/ruler.png" width={14} height={14}/>
+                <span>{area}</span>
+              </div>
+            )}
+
+            {beds !== undefined && (
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <img src="/icons/bed.png" width={14} height={14}/>
+                <span>{beds} Beds</span>
+              </div>
+            )}
+
+            {baths !== undefined && (
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <img src="/icons/bath.png" width={14} height={14}/>
+                <span>{baths} Baths</span>
+              </div>
+            )}
+
+            {property.facing && (
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <img src="/icons/balcony.png" width={14} height={14}/>
+                <span>{property.facing}</span>
+              </div>
+            )}
+
+            {property.floorNumber && property.totalFloors && (
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <img src="/icons/balcony.png" width={14} height={14}/>
+                <span>
+                  {property.floorNumber === "0" ? "Ground" : property.floorNumber}
+                  {" "}of {property.totalFloors} Floors
+                </span>
+              </div>
+            )}
+
+          </div>
+
+          {/* ADDRESS */}
+          <div style={{ color:"#888", fontSize:12 }}>
+            {address}
+          </div>
+
+          {/* BUTTONS */}
+          <div style={{ display:"flex", gap:16, marginTop:24 }}>
+            <button
+              style={{
+                background:"#e53935",
+                color:"white",
+                borderRadius:24,
+                padding:"12px 32px",
+                fontWeight:600,
+                fontSize:16,
+                border:"none"
+              }}
+              onClick={()=>setOpen(true)}
+            >
+              Contact Owner
+            </button>
+
+            <button
+              style={{
+                background:"white",
+                color:"#e53935",
+                border:"2px solid #e53935",
+                borderRadius:24,
+                padding:"12px 32px",
+                fontWeight:600,
+                fontSize:16
+              }}
+              onClick={()=>setOpen(true)}
+            >
+              Get Phone No.
+            </button>
+          </div>
+
         </div>
-
-        <div className="flex items-center text-gray-500 mt-2 text-sm">
-          <MapPin size={16} className="mr-1" />
-          {property.address}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 rounded-xl p-5 mb-6">
-
-        <Highlight icon={<Ruler />} label="Area" value={property.area} />
-        <Highlight icon={<Bed />} label="Beds" value={property.beds} />
-        <Highlight icon={<Bath />} label="Baths" value={property.baths} />
-
-        {property.facing && (
-          <Highlight icon={<Compass />} label="Facing" value={property.facing} />
-        )}
-
-        {property.floorNumber && property.totalFloors && (
-          <Highlight
-            icon={<Layers />}
-            label="Floor"
-            value={`${property.floorNumber} / ${property.totalFloors}`}
-          />
-        )}
-
-      </div>
-
-      {property.description && (
-        <p className="text-gray-600 mb-6 leading-relaxed">
-          {property.description}
-        </p>
-      )}
-
-      <div className="flex gap-3">
-        <button
-          onClick={() => setOpen(true)}
-          className="flex-1 bg-red-600 text-white py-3 rounded-full font-semibold"
-        >
-          Contact Owner
-        </button>
-
-        <button
-          onClick={() => setOpen(true)}
-          className="flex-1 border border-red-600 text-red-600 py-3 rounded-full font-semibold"
-        >
-          Get Phone
-        </button>
       </div>
 
       <ContactOwnerDialog
         isOpen={open}
-        onClose={() => setOpen(false)}
-        ownerContact={property.whatsapp}
+        onClose={()=>setOpen(false)}
+        ownerContact={
+          property.whatsapp ||
+          property.phone ||
+          property.contactPhone ||
+          "+91 9876543210"
+        }
         propertyId={property.id}
       />
-
     </div>
   )
 }
-
-const Highlight = ({ icon, label, value }: any) => (
-  <div className="flex items-center gap-3">
-    <div className="bg-red-50 text-red-600 p-2 rounded-lg">{icon}</div>
-    <div>
-      <div className="text-xs text-gray-500">{label}</div>
-      <div className="font-semibold">{value}</div>
-    </div>
-  </div>
-)
 
 export default PropertyDetailWidget
