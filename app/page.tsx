@@ -27,6 +27,7 @@ const cities: City[] = [
   { name: "Mumbai", lat: 19.076, lng: 72.8777 },
   { name: "New Delhi", lat: 28.6139, lng: 77.209 },
   { name: "Vijayawada", lat: 16.5062, lng: 80.648 },
+   { name: "Islamabad", lat: 33.6844, lng: 73.0479 } // Added Islamabad
 ]
 
 const tabs = [

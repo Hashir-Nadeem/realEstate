@@ -53,31 +53,43 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!validateForm()) return
+  if (!validateForm()) return;
 
-    setIsLoading(true)
+  setIsLoading(true);
 
-    try {
-      const result = await login(
-        formData.email,
-        formData.password,
-        formData.rememberMe
-      )
+  try {
+    const result = await login(
+      formData.email,
+      formData.password,
+      formData.rememberMe
+    );
 
-      if (result.success) {
-        router.replace(redirectTo)
-      } else {
-        setErrors({ general: result.message })
-      }
-    } catch {
-      setErrors({ general: 'Something went wrong. Please try again.' })
-    } finally {
-      setIsLoading(false)
+    if (!result?.success) {
+      setErrors({
+        general: result?.message ?? "Something went wrong"
+      });
+      return;
     }
+    // ✅ Safety: ensure role exists
+    const user =
+  result.user 
+  JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (user?.role?.toLowerCase() === 'admin') {
+      router.replace('/admin/dashboard');
+    } else {
+      router.replace(redirectTo || '/');
+    }
+
+  } catch (error) {
+    setErrors({ general: 'Something went wrong. Please try again.' });
+  } finally {
+    setIsLoading(false);
   }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

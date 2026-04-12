@@ -1,5 +1,6 @@
 // City-Locality mapping data based on city_local_map.xlsx
 export const cityLocalityMap: Record<string, string[]> = {
+  
   "Vijayawada": [
     "Tadepalli",
     "Poranki",

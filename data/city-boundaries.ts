@@ -1,5 +1,12 @@
 // City boundary coordinates (simplified polygons)
 export const cityBoundaries = {
+   Islamabad: [
+    [33.5651, 72.9780], // bottom-left
+    [33.5651, 73.2000], // bottom-right
+    [33.8000, 73.2000], // top-right
+    [33.8000, 72.9780], // top-left
+    [33.5651, 72.9780], // close polygon
+  ],
   Bangalore: [
     [12.8348, 77.4531],
     [12.8348, 77.7822],

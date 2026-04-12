@@ -89,9 +89,11 @@ export default function SignupPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    countryCode: '+91'
+    countryCode: '+91',
+    role: 'User' // 👈 default role
   })
 
+ 
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
@@ -144,7 +146,8 @@ export default function SignupPage() {
         name: formData.name,
         email: formData.email,
         phone: `${formData.countryCode}${formData.phone}`,
-        password: formData.password
+        password: formData.password,
+        role: 'Admin' // 👈 PASS USER ROLE
       })
 
       if (result.success) {

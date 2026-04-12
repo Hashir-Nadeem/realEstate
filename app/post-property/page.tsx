@@ -445,10 +445,13 @@ export default function PostPropertyPage() {
       const uploadJson = await uploadRes.json()
       uploadedUrls = uploadJson.files || []
     }
+
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = user?.id;
     // 2️⃣ Prepare payload for .NET API
    const payload = {
   formData: {
-    UserId: '234',
+    UserId: userId,
     propertyCategory: formData.propertyCategory,
     youAreHereTo: formData.youAreHereTo,
     title: formData.title,

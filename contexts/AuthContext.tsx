@@ -16,20 +16,26 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   loading: boolean;
-
   signup: (data: {
     name: string;
     email: string;
     phone: string;
     password: string;
+    role: string; // ✅ ADD THIS
   }) => Promise<{ success: boolean; message: string }>;
-
-  login: (
-    email: string,
-    password: string,
-    rememberMe: boolean
-
-  ) => Promise<{ success: boolean; message: string }>;
+login: (
+  email: string,
+  password: string,
+  rememberMe: boolean
+) => Promise<{
+  success: boolean;
+  message?: string;
+  user?: {
+    id: number;
+    email: string;
+    role: string;
+  };
+}>;
 
   forgotPassword: (
     email: string
@@ -65,24 +71,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ==========================
   // REGISTER
   // ==========================
-  const signup = async (data: {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-  }) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: data.name,
-          email: data.email,
-          phoneNumber: data.phone,
-          password: data.password,
-          rememberMe: false,
-        }),
-      });
+ const signup = async (data: {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: string; // 👈 add this
+}) => {
+  try {
+    const response = await fetch(`${API_BASE}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullName: data.name,
+        email: data.email,
+        phoneNumber: data.phone,
+        password: data.password,
+        role: data.role, // 👈 pass role
+        rememberMe: false,
+      }),
+    });
 
       const result = await response.json();
 
@@ -107,8 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ==========================
-  // LOGIN
-  // ==========================
+// LOGIN
+// ==========================
 const login = async (
   emailOrPhone: string,
   password: string,
@@ -121,29 +129,42 @@ const login = async (
       body: JSON.stringify({
         emailOrPhone,
         password,
-        rememberMe
+        rememberMe,
       }),
     });
 
-    const result = await response.json();
+    const data = await response.json();
 
     if (!response.ok) {
       return {
         success: false,
-        message: result.message || "Invalid credentials",
+        message: data?.message || "Login failed",
       };
     }
 
-    localStorage.setItem("accessToken", result.accessToken);
-    localStorage.setItem("refreshToken", result.refreshToken);
-    localStorage.setItem("user", JSON.stringify(result.user));
-    
-    setUser(result.user);
-    setIsAuthenticated(true);
+    // ✅ Normalize user (fix User vs user issue HERE)
+    const user = data.user || data.User;
 
-    return { success: true, message: "Login successful" };
-  } catch {
-    return { success: false, message: "Server error" };
+    // ✅ Save properly
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    }
+
+    // (optional but recommended)
+    if (data.accessToken) {
+      localStorage.setItem("accessToken", data.accessToken);
+    }
+
+    return {
+      success: true,
+      user: user, // ✅ always lowercase now
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      message: "Something went wrong. Please try again.",
+    };
   }
 };
 
