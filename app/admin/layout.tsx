@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
+
 
 export default function AdminLayout({
   children,
@@ -9,38 +11,97 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const path = usePathname()
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
 
   const menu = [
-    { name: 'Dashboard', href: '/admin/dashboard' },
+    { name: 'Properties', href: '/admin/dashboard' },
     { name: 'Users', href: '/admin/users' },
   ]
 
+  const handleLogout = async () => {
+    try {
+      setLoading(true)
+
+      const refreshToken = localStorage.getItem('refreshToken')
+      const token = localStorage.getItem('token')
+
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ refreshToken }),
+      })
+
+    } catch (err) {
+      console.error('Logout failed', err)
+    } finally {
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+
+      router.push('/login')
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-100">
 
       {/* Sidebar */}
-      <aside className="w-64 bg-black text-white p-5">
-        <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
+      <aside className="w-64 bg-gray-900 text-white shadow-lg">
 
-        <nav className="space-y-3">
+        <div className="p-5 border-b border-gray-800">
+          <h2 className="text-2xl font-bold tracking-wide">
+            Admin Panel
+          </h2>
+        </div>
+
+        <nav className="p-4 space-y-2">
+
+          {/* Menu Links */}
           {menu.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-3 py-2 rounded ${
-                path === item.href ? 'bg-gray-800' : ''
+              className={`block px-4 py-2 rounded-lg transition ${
+                path === item.href
+                  ? 'bg-blue-600 text-white'
+                  : 'hover:bg-gray-800 text-gray-300'
               }`}
             >
               {item.name}
             </Link>
           ))}
+
+          {/* 🔥 Logout inside menu */}
+          <button
+            onClick={handleLogout}
+            disabled={loading}
+            className="w-full text-left px-4 py-2 rounded-lg transition bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+          >
+            {loading ? 'Logging out...' : 'Logout'}
+          </button>
+
         </nav>
       </aside>
 
-      {/* Content */}
-      <main className="flex-1 bg-gray-100 p-6">
-        {children}
-      </main>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+
+        {/* Header */}
+        <header className="bg-white shadow px-6 py-4">
+          <h1 className="text-lg font-semibold">
+            Admin Dashboard
+          </h1>
+        </header>
+
+        {/* Content */}
+        <main className="p-6">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
