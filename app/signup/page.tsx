@@ -90,7 +90,7 @@ export default function SignupPage() {
     password: '',
     confirmPassword: '',
     countryCode: '+91',
-    role: 'User' // 👈 default role
+    role: 'User' 
   })
 
  
@@ -147,7 +147,7 @@ export default function SignupPage() {
         email: formData.email,
         phone: `${formData.countryCode}${formData.phone}`,
         password: formData.password,
-        role: 'Admin' // 👈 PASS USER ROLE
+        role: 'User' // 👈 PASS USER ROLE
       })
 
       if (result.success) {
