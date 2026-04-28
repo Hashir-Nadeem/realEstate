@@ -4,46 +4,53 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext"; // ✅ FIXED PATH
 
 export default function DashboardPage() {
-  const { user, token } = useAuth();
+  const [user, setUser] = useState<any>(null);
 
+
+useEffect(() => {
+  const initAuth = () => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }
+    setLoading(false);
+  };
+
+  initAuth();
+}, []);
+
+  const [userId, setUserId] = useState<string | null>(null);
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // ================= FETCH =================
-  useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        if (!token) {
-          console.error("Token not found");
-          setLoading(false);
-          return;
-        }
+ useEffect(() => {
+  if (!userId) return;
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/properties/my`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
-          }
-        );
+  const fetchProperties = async () => {
+    try {
+     const res = await fetch(
+  `${process.env.NEXT_PUBLIC_API_URL}/properties/by-user/${userId}`
+);
 
-        const data = await res.json();
-        setProperties(data);
-      } catch (err) {
-        console.error("Fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await res.json();
+      setProperties(data);
+      console.log("Fetched properties:", userId, data);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchProperties();
-  }, [token]);
-
+  fetchProperties();
+}, [userId]);
   // ================= LOGOUT =================
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     window.location.href = "/login";
   };
 

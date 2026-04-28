@@ -81,7 +81,7 @@ export default function LoginPage() {
     if (user?.role?.toLowerCase() === 'admin') {
       router.replace('/admin/dashboard');
     } else {
-      router.replace(redirectTo || '/');
+      router.replace('/users/dashboard');
     }
 
   } catch (error) {
