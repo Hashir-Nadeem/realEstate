@@ -11,8 +11,13 @@ useEffect(() => {
   const initAuth = () => {
     if (typeof window !== "undefined") {
       const storedUser = localStorage.getItem("user");
+
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+
+        // ✅ SET USER ID HERE
+        setUserId(parsedUser.id); // or parsedUser.userId (depends on your backend)
       }
     }
     setLoading(false);
@@ -25,6 +30,7 @@ useEffect(() => {
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  
   // ================= FETCH =================
  useEffect(() => {
   if (!userId) return;
@@ -32,7 +38,7 @@ useEffect(() => {
   const fetchProperties = async () => {
     try {
      const res = await fetch(
-  `${process.env.NEXT_PUBLIC_API_URL}/properties/by-user/${userId}`
+  `${process.env.NEXT_PUBLIC_API_URL}/properties/byuser/${userId}`
 );
 
       const data = await res.json();
