@@ -106,10 +106,10 @@ useEffect(() => {
             >
               {/* IMAGE */}
               <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}${p.images?.[0]}`}
-                alt="property"
-                className="w-32 h-24 object-cover rounded-xl"
-              />
+  src={`${p.images?.[0]}`}
+  alt="property"
+  className="w-32 h-24 object-cover rounded-xl"
+/>
 
               {/* DETAILS */}
               <div className="flex-1">
