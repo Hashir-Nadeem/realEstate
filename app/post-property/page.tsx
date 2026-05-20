@@ -102,6 +102,32 @@ export default function PostPropertyPage() {
     // Photos
     photos: [] as File[],
   })
+ useEffect(() => {
+  const savedData = localStorage.getItem("pendingProperty");
+
+  if (savedData) {
+    const parsed = JSON.parse(savedData);
+
+    setFormData(prev => ({
+      ...prev,
+      ...parsed.formData,
+      photos: []
+    }));
+
+    setUseCustomLocation(
+      parsed.useCustomLocation || false
+    );
+
+    setSelectedLocation(
+      parsed.selectedLocation || null
+    );
+      // reload once only
+    if (!sessionStorage.getItem("reloaded")) {
+      sessionStorage.setItem("reloaded", "true");
+      window.location.reload();
+    }
+  }
+}, []);
 
   // submission state
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -399,13 +425,26 @@ export default function PostPropertyPage() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
 
   if (!isAuthenticated) {
-    router.push('/login?redirect=/post-property')
-    return
-  }
+
+  // Remove files because File objects can't be serialized
+  const { photos, ...formWithoutPhotos } = formData;
+
+localStorage.setItem(
+  "pendingProperty",
+  JSON.stringify({
+    formData: formWithoutPhotos,
+    useCustomLocation,
+    selectedLocation
+  })
+);
+
+  router.push('/login?redirect=/post-property');
+  return;
+}
 
   setSubmitMessage(null)
   setIsSubmitting(true)
@@ -424,6 +463,9 @@ export default function PostPropertyPage() {
       return
     }
   }
+
+  // continue submit logic...
+
 
   try {
     // 1️⃣ Upload images first (if any)
@@ -502,6 +544,7 @@ export default function PostPropertyPage() {
     })
 
     setSubmitMessage("Property submitted successfully ✅")
+    localStorage.removeItem("pendingProperty");
     router.push("/")
 
   } catch (err: any) {

@@ -53,7 +53,7 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0
   }
 
- const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!validateForm()) return;
@@ -73,19 +73,33 @@ export default function LoginPage() {
       });
       return;
     }
-    // ✅ Safety: ensure role exists
+
     const user =
-  result.user 
+  result.user ||
   JSON.parse(localStorage.getItem('user') || '{}');
 
-    if (user?.role?.toLowerCase() === 'admin') {
-      router.replace('/admin/dashboard');
-    } else {
-      router.replace('/users/dashboard');
-    }
+const params = new URLSearchParams(window.location.search);
+const redirect = params.get('redirect');
+
+// Redirect back to the original page if it exists
+if (redirect) {
+  router.replace(redirect);
+} else {
+  // Normal login flow
+  if (user?.role?.toLowerCase() === 'admin') {
+    router.replace('/admin/dashboard');
+  } else {
+    router.replace('/users/dashboard');
+  }
+}
+
+// Force auth/UI refresh
+router.refresh();
 
   } catch (error) {
-    setErrors({ general: 'Something went wrong. Please try again.' });
+    setErrors({
+      general: 'Something went wrong. Please try again.'
+    });
   } finally {
     setIsLoading(false);
   }
