@@ -467,92 +467,113 @@ localStorage.setItem(
   // continue submit logic...
 
 
-  try {
-    // 1️⃣ Upload images first (if any)
-    let uploadedUrls: string[] = []
+try {
+  console.log(" Submit started");
 
-    if (formData.photos && formData.photos.length > 0) {
-      const fd = new FormData()
-      formData.photos.forEach((f) => fd.append("photos", f))
+  // 1️⃣ Upload images first (if any)
+  let uploadedUrls: string[] = [];
 
-      const uploadRes = await fetch("/api/upload-images", {
-        method: "POST",
-        body: fd,
-      })
+  console.log("🖼️ Checking photos:", formData.photos?.length || 0);
 
-      if (!uploadRes.ok) {
-        throw new Error("Image upload failed")
-      }
+  if (formData.photos && formData.photos.length > 0) {
+    console.log("⬆️ Uploading images...");
 
-      const uploadJson = await uploadRes.json()
-      uploadedUrls = uploadJson.files || []
+    const fd = new FormData();
+    formData.photos.forEach((f) => fd.append("photos", f));
+
+    console.log("📦 FormData prepared with files:", formData.photos.length);
+
+    const uploadRes = await fetch("/api/upload-images", {
+      method: "POST",
+      body: fd,
+    });
+
+    console.log("📡 Upload response status:", uploadRes.status);
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      console.error("❌ Image upload failed response:", errText);
+      throw new Error("Image upload failed");
     }
 
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const userId = user?.id;
-    // 2️⃣ Prepare payload for .NET API
-   const payload = {
-  formData: {
-    UserId: userId,
-    propertyCategory: formData.propertyCategory,
-    youAreHereTo: formData.youAreHereTo,
-    title: formData.title,
-    description: formData.description,
+    const uploadJson = await uploadRes.json();
+    console.log("📥 Upload response JSON:", uploadJson);
 
-    // 🔥 IMPORTANT: convert to correct numeric types
-    price: Number(formData.price),
-    priceUnit: formData.priceUnit,
-
-    area: Number(formData.area),
-    areaUnit: formData.areaUnit,
-
-    bedrooms: formData.bedrooms,
-    bathrooms: formData.bathrooms,
-    facing: formData.facing,
-    floorNumber: formData.floorNumber,
-    totalFloors: formData.totalFloors,
-
-    fullAddress: formData.fullAddress,
-    city: useCustomLocation
-      ? formData.customCity
-      : formData.city,
-    locality: useCustomLocation
-      ? formData.customLocality
-      : formData.locality,
-
-    contactPersonName: formData.contactPersonName,
-    email: formData.email,
-    whatsapp: formData.whatsapp,
-
-    uploadedImages: uploadedUrls || [],
-  },
-
-  location: selectedLocation
-    ? {
-        lat: selectedLocation.lat,
-        lng: selectedLocation.lng,
-      }
-    : null,
-
-  submittedAt: new Date().toISOString(),
-}
-
-    // 3️⃣ Send to .NET backend using apiRequest
-    await apiRequest("/properties", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    })
-
-    setSubmitMessage("Property submitted successfully ✅")
-    localStorage.removeItem("pendingProperty");
-    router.push("/")
-
-  } catch (err: any) {
-    console.error("Submit error:", err)
-    setSubmitMessage(err.message || "Failed to submit property.")
-  } finally {
-    setIsSubmitting(false)
+    uploadedUrls = uploadJson.files || [];
+    console.log("✅ Uploaded URLs:", uploadedUrls);
+  } else {
+    console.log("ℹ️ No images to upload");
   }
+
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = user?.id;
+
+  console.log("👤 User loaded:", userId);
+
+  // 2️⃣ Prepare payload for .NET API
+  const payload = {
+    formData: {
+      UserId: userId,
+      propertyCategory: formData.propertyCategory,
+      youAreHereTo: formData.youAreHereTo,
+      title: formData.title,
+      description: formData.description,
+
+      price: Number(formData.price),
+      priceUnit: formData.priceUnit,
+
+      area: Number(formData.area),
+      areaUnit: formData.areaUnit,
+
+      bedrooms: formData.bedrooms,
+      bathrooms: formData.bathrooms,
+      facing: formData.facing,
+      floorNumber: formData.floorNumber,
+      totalFloors: formData.totalFloors,
+
+      fullAddress: formData.fullAddress,
+      city: useCustomLocation ? formData.customCity : formData.city,
+      locality: useCustomLocation ? formData.customLocality : formData.locality,
+
+      contactPersonName: formData.contactPersonName,
+      email: formData.email,
+      whatsapp: formData.whatsapp,
+
+      uploadedImages: uploadedUrls || [],
+    },
+
+    location: selectedLocation
+      ? {
+          lat: selectedLocation.lat,
+          lng: selectedLocation.lng,
+        }
+      : null,
+
+    submittedAt: new Date().toISOString(),
+  };
+
+  console.log("📨 Final payload ready:", payload);
+
+  // 3️⃣ Send to .NET backend using apiRequest
+  console.log("➡️ Sending payload to /properties...");
+
+  await apiRequest("/properties", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  console.log(" Property submission successful");
+  setSubmitMessage("Property submitted successfully ✅");
+  localStorage.removeItem("pendingProperty");
+  router.push("/");
+
+} catch (err: any) {
+  console.error(" Submit error:", err);
+  setSubmitMessage(err.message || "Failed to submit property.");
+} finally {
+  console.log("🏁 Submit flow finished");
+  setIsSubmitting(false);
+}
 }
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
