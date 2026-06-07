@@ -5,24 +5,25 @@ export const runtime = "nodejs"
 
 export async function POST(request: Request) {
   try {
-    // Verify token exists
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "BLOB_READ_WRITE_TOKEN is not configured",
-        },
-        { status: 500 }
-      )
-    }
-
     const formData = await request.formData()
     const files = formData.getAll("photos") as File[]
 
-    const saved: string[] = []
+    if (!files.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No files uploaded",
+        },
+        { status: 400 }
+      )
+    }
+
+    const uploadedUrls: string[] = []
 
     for (const file of files) {
-      if (!file || typeof file.arrayBuffer !== "function") continue
+      if (!file || typeof file.arrayBuffer !== "function") {
+        continue
+      }
 
       const safeName = `${Date.now()}-${Math.random()
         .toString(36)
@@ -30,22 +31,26 @@ export async function POST(request: Request) {
 
       const blob = await put(safeName, file, {
         access: "public",
+        contentType: file.type,
       })
 
-      saved.push(blob.url)
+      uploadedUrls.push(blob.url)
     }
 
     return NextResponse.json({
       success: true,
-      files: saved,
+      files: uploadedUrls,
     })
-  } catch (err) {
-    console.error("upload-images error:", err)
+  } catch (error) {
+    console.error("upload-images error:", error)
 
     return NextResponse.json(
       {
         success: false,
-        error: err instanceof Error ? err.message : "Upload failed",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload images",
       },
       { status: 500 }
     )
