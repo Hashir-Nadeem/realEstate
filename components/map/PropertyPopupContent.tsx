@@ -16,9 +16,9 @@ interface Property {
   price: string
   uploadedImages:string[]
   fullAddress: string
+  youAreHereTo:string
+  priceUnit?: string
 }
-
-
 
 interface PopupOptions {
   showCloseButton?: boolean
@@ -32,31 +32,45 @@ export const generatePropertyPopupContent = (
   const { showCloseButton = true } = options
 
   const p: any = property   // ⭐ allow payload flexibility
+let img =
+  "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop";
 
-  // ⭐ IMAGE
-let img = "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop"
+const raw = property.uploadedImages?.[0] || property.imageUrl;
 
-if (Array.isArray(property.uploadedImages) && property.uploadedImages.length > 0) {
-  let raw = property.uploadedImages[0]
+// 🔥 normalize possible formats
+let value =
+  typeof raw === "string"
+    ? raw.trim()
+    : null;
 
-  if (raw && typeof raw === "string") {
-    raw = raw.trim()
-
-    if (raw.startsWith("http")) {
-      img = raw
-    } else {
-      img = raw.startsWith("/") ? raw : "/" + raw
-    }
+if (value) {
+  // Base64 JPEG/PNG without prefix
+  if (
+    value.startsWith("/9j/") ||      // JPEG
+    value.startsWith("iVBOR") ||     // PNG
+    value.startsWith("R0lGOD")       // GIF
+  ) {
+    img = `data:image/jpeg;base64,${value}`;
+  }
+  else if (value.startsWith("http://") || value.startsWith("https://")) {
+    img = value;
+  }
+  else if (value.startsWith("data:image")) {
+    img = value;
+  }
+  else if (value.startsWith("/")) {
+    img = value;
+  }
+  else {
+    img = "/" + value;
   }
 }
-else if (property.imageUrl) {
-  img = property.imageUrl.startsWith("/")
-    ? property.imageUrl
-    : "/" + property.imageUrl
-}
+
+console.log("RAW IMAGE:", raw?.substring?.(0, 50));
+console.log("FINAL IMAGE:", img?.substring?.(0, 100));
+
 
 // ⭐ DEBUG SAFE LOG
-console.log("REAL IMAGE URL →", property.uploadedImages[0])
   // ⭐ BEDS / BATHS
   const beds =
     property.beds ??
@@ -115,10 +129,20 @@ console.log("REAL IMAGE URL →", property.uploadedImages[0])
     ""
 
   // ⭐ TYPE (SALE / RENT)
-  const type =
-    property.type ||
-    p.YouAreHereTo ||
-    "sale"
+ const type = (
+  property.youAreHereTo ||
+  ""
+).toLowerCase();
+
+let listingType = "UNKNOWN";
+
+if (type.includes("rent")) {
+  listingType = "RENT";
+} else if (type.includes("sell") || type.includes("sale")) {
+  listingType = "SALE";
+}
+
+console.log("Listing Type:", listingType);
 
   // ⭐ PRICE (Mongo Decimal + Unit)
   let priceDisplay = property.price
@@ -208,7 +232,7 @@ console.log("REAL IMAGE URL →", property.uploadedImages[0])
   const popupContent = `
     <div style="position:relative; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width:100%; width:90vw; border-radius:8px; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15); background:white;">
       ${closeBtn}
-      <div onclick="window.propertyDetailsHandler('${property.id}')" style="cursor:pointer;">
+      <div  style="cursor:pointer;">
         <!-- Image Section -->
         <div style="position:relative; width:100%; height:160px; overflow:hidden;">
           <img src="${img}" alt="${property.title}" style="width:100%; height:100%; object-fit:cover; display:block;"/>
@@ -219,15 +243,29 @@ console.log("REAL IMAGE URL →", property.uploadedImages[0])
         <!-- Content Section -->
         <div style="padding:12px 16px;">
           <!-- Row 1: Property Type and Status -->
-          <div style="margin-bottom:6px;">
-            <span style="color:#333; font-size:14px; font-weight:600; line-height:1.3; display:block;">
-              ${beds} BHK Flat FOR ${type?.toLowerCase().includes('sell') || type?.toLowerCase().includes('sale') ? 'SALE' : 'RENT'} in ${locality}, ${city}
-            </span>
-          </div>
+        <div style="margin-bottom:6px;">
+  <span
+    style={{
+      color: "#333",
+      fontSize: "14px",
+      fontWeight: 600,
+      lineHeight: 1.3,
+      display: "block",
+    }}
+  >
+    ${beds} BHK Flat FOR ${
+      property?.youAreHereTo?.toLowerCase() === "rent"
+        ? "RENT"
+        : property?.youAreHereTo?.toLowerCase() === "sell" || property?.youAreHereTo?.toLowerCase() === "sale"
+        ? "SALE"
+        : "UNKNOWN"
+    } in ${locality}, ${city}
+  </span>
+</div>
           
           <!-- Row 2: Price -->
           <div style="margin-bottom:10px;">
-            <span style="color:#000; font-size:18px; font-weight:700; display:block;">${priceDisplay}</span>
+            <span style="color:#000; font-size:18px; font-weight:700; display:block;">₹${priceDisplay} ${property?.priceUnit || ''}</span>
           </div>
           
           <!-- Row 3: Details with icons -->

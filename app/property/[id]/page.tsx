@@ -14,7 +14,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL
 interface Property {
   id: number | string
   imageUrl?: string
-  UploadedImages?: string[]
+  uploadedImages?: string[]
   title: string
   beds?: number
   baths?: number
@@ -37,6 +37,7 @@ interface Property {
   phone?: string
   contactPhone?: string
   contactPersonName?: string
+  youAreHereTo?: string
 }
 
 export default function PropertyDetailsPage() {
@@ -57,67 +58,64 @@ export default function PropertyDetailsPage() {
   useEffect(() => {
   const fetchProperty = async () => {
   try {
-
-    console.log("👉 URL ID =", propertyIdStr)
-
-    const res = await fetch(`${API_BASE}/properties`, {
+    const res = await fetch(`${API_BASE}/properties/GetAllProperties?page=1&pageSize=50`, {
       cache: "no-store"
     })
 
     const list = await res.json()
-
-    console.log("👉 FULL LIST =", list)
-
     const selected = list.find(
       (p:any)=> String(p.id) === String(propertyIdStr)
     )
-
-    console.log("👉 SELECTED PROPERTY =", selected)
-
     if (!selected) {
       setProperty(null)
       return
     }
+const normalizedProperty = {
+  id: selected.id,
+  title: selected.title,
+  beds: selected.bedrooms ? Number(selected.bedrooms) : undefined,
+  baths: selected.bathrooms ? Number(selected.bathrooms) : undefined,
+  area:
+    selected.area && selected.areaUnit
+      ? `${selected.area} ${selected.areaUnit}`
+      : undefined,
+  address: selected.fullAddress,
+  price: selected.price
+    ? `₹ ${Number(selected.price).toLocaleString()} / ${selected.priceUnit}`
+    : "",
+  city: selected.city,
+  locality: selected.locality,
+  facing: selected.facing,
+  floorNumber: selected.floorNumber,
+  totalFloors: selected.totalFloors,
 
-    const normalizedProperty = {
-      id: selected.id,
-      title: selected.title,
-      beds: selected.bedrooms ? Number(selected.bedrooms) : undefined,
-      baths: selected.bathrooms ? Number(selected.bathrooms) : undefined,
-      area: selected.area && selected.areaUnit
-        ? `${selected.area} ${selected.areaUnit}`
-        : undefined,
-      address: selected.fullAddress,
-      price: selected.price
-        ? `₹ ${Number(selected.price).toLocaleString()} / ${selected.priceUnit}`
-        : "",
-      city: selected.city,
-      locality: selected.locality,
-      facing: selected.facing,
-      floorNumber: selected.floorNumber,
-      totalFloors: selected.totalFloors,
-      type:
-        selected.youAreHereTo === "rental"
-          ? "rental"
-          : `sale-${selected.propertyCategory}`,
-      propertyCategory: selected.propertyCategory,
-      lat: selected.location?.coordinates?.[0],
-      lng: selected.location?.coordinates?.[1],
-      whatsapp: selected.whatsapp,
-      contactPersonName: selected.contactPersonName,
-      UploadedImages: selected.uploadedImages || []
+  // 👇 keep original purpose
+  youAreHereTo: selected.youAreHereTo,
+
+  // 👇 normalized display type
+  type:
+    selected.youAreHereTo?.toLowerCase() === "rent"
+      ? "RENT"
+      : selected.youAreHereTo?.toLowerCase() === "sell" || selected.youAreHereTo?.toLowerCase() === "sale"
+      ? "SALE"
+      : "UNKNOWN",
+
+  propertyCategory: selected.propertyCategory,
+  lat: selected.location?.coordinates?.[0],
+  lng: selected.location?.coordinates?.[1],
+  whatsapp: selected.whatsapp,
+  contactPersonName: selected.contactPersonName,
+  uploadedImages: selected.uploadedImages || []
+};
+
+setProperty(normalizedProperty);
+
+      } catch (err) {
+        console.error("❌ FETCH ERROR =", err)
+      } finally {
+        setLoading(false)
+      }
     }
-
-    console.log("✅ FINAL NORMALIZED =", normalizedProperty)
-
-    setProperty(normalizedProperty)
-
-  } catch (err) {
-    console.error("❌ FETCH ERROR =", err)
-  } finally {
-    setLoading(false)
-  }
-}
 
     if (propertyId) {
       fetchProperty()
@@ -272,29 +270,64 @@ export default function PropertyDetailsPage() {
     return 'bg-red-600'
   }
 
-  const getPropertyImages = (property: Property) => {
-    const images: string[] = []
-    
-    // Prioritize the images array if it exists and has content
-    if (property.UploadedImages && property.UploadedImages.length > 0) {
-      // Use the images array directly (it should contain all images including the main one)
-      images.push(...property.UploadedImages)
-    } else if (property.imageUrl) {
-      // Fallback to main image if no images array
-      images.push(property.imageUrl)
-    }
-    
-    // Remove duplicates by converting to Set and back to array
-    const uniqueImages = Array.from(new Set(images))
-    
-    // If no images, use a default placeholder
-    if (uniqueImages.length === 0) {
-      uniqueImages.push("https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop")
-    }
-    
-    // Return maximum 2 images
-    return uniqueImages.slice(0, 2)
+const getPropertyImages = (property: Property) => {
+  const images: string[] = [];
+
+  if (property.uploadedImages?.length) {
+    images.push(...property.uploadedImages);
+  } else if (property.imageUrl) {
+    images.push(property.imageUrl);
   }
+
+  const normalizedImages = images
+    .filter(Boolean)
+    .map((img) => {
+      const value = String(img).trim();
+
+      // Raw Base64 JPEG
+      if (value.startsWith("/9j/")) {
+        return `data:image/jpeg;base64,${value}`;
+      }
+
+      // Raw Base64 PNG
+      if (value.startsWith("iVBOR")) {
+        return `data:image/png;base64,${value}`;
+      }
+
+      // Already a data URL
+      if (value.startsWith("data:image")) {
+        return value;
+      }
+
+      // Absolute URL
+      if (
+        value.startsWith("http://") ||
+        value.startsWith("https://")
+      ) {
+        return value;
+      }
+
+      // Relative URL
+      if (value.startsWith("/")) {
+        return value;
+      }
+
+      return `/${value}`;
+    });
+
+  const uniqueImages = [...new Set(normalizedImages)];
+
+  if (uniqueImages.length === 0) {
+    uniqueImages.push(
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop"
+    );
+  }
+
+  console.log("uploadedImages:", property.uploadedImages);
+  console.log("normalizedImages:", uniqueImages);
+
+  return uniqueImages.slice(0, 2);
+};
 
   if (loading) {
     return (

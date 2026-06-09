@@ -490,11 +490,17 @@ try {
 
     console.log("📡 Upload response status:", uploadRes.status);
 
-    if (!uploadRes.ok) {
-      const errText = await uploadRes.text();
-      console.error("❌ Image upload failed response:", errText);
-      throw new Error("Image upload failed");
-    }
+   if (!uploadRes.ok) {
+  const errText = await uploadRes.text();
+
+  console.error("❌ Upload failed");
+  console.error("Status:", uploadRes.status);
+  console.error("Response:", errText);
+
+  throw new Error(
+    `Image upload failed (${uploadRes.status}): ${errText}`
+  );
+}
 
     const uploadJson = await uploadRes.json();
     console.log("📥 Upload response JSON:", uploadJson);

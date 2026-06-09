@@ -29,12 +29,26 @@ export default function ListPage() {
 
       if (!res.ok) throw new Error("Failed to fetch")
 
-      const data = await res.json()
+   const data = await res.json()
 
-      setProperties(Array.isArray(data) ? data : [])
+const list =
+  Array.isArray(data)
+    ? data
+    : data?.items
+    ? data.items
+    : data?.data
+    ? data.data
+    : []
+
+setProperties(list)
+
+console.log("Properties fetched:", list.length)
+
+      
     } catch (err) {
       console.error("Properties API error:", err)
       setProperties([])
+      console.log("Properties fetched: 0")
     } finally {
       setIsLoading(false)
     }
@@ -43,33 +57,28 @@ export default function ListPage() {
   fetchProperties()
 }, [])
 
-  // ✅ Filtering Logic
-  useEffect(() => {
-    let result = [...properties]
+ useEffect(() => {
+  let result = [...properties]
 
-    if (city) {
-      result = result.filter(p => p.city === city)
-    }
+  if (city) {
+    result = result.filter(p => p.city === city)
+  }
 
-    if (locality !== "All") {
-      result = result.filter(p => p.locality === locality)
-    }
+  if (locality !== "All") {
+    result = result.filter(p => p.locality === locality)
+  }
 
-    if (saleRentFilter !== "all") {
-      if (saleRentFilter === "sale") {
-        result = result.filter(p => p.type?.startsWith("sale"))
-      } else {
-        result = result.filter(p => p.type === "rental")
-      }
-    }
+  
 
-    if (saleRentFilter === "sale" && propertyTypeFilter.length > 0) {
-      result = result.filter(p => propertyTypeFilter.includes(p.type))
-    }
+  // ✅ Property type filter should NOT depend on sale/rent logic
+  if (propertyTypeFilter.length > 0) {
+    result = result.filter(p =>
+      propertyTypeFilter.includes(p.propertyType) // 👈 IMPORTANT FIX
+    )
+  }
 
-    setFilteredProperties(result)
-  }, [properties, city, locality, saleRentFilter, propertyTypeFilter])
-
+  setFilteredProperties(result)
+}, [properties, city, locality, saleRentFilter, propertyTypeFilter])
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <ListPageHeader
