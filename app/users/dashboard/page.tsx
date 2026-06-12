@@ -41,6 +41,7 @@ useEffect(() => {
 );
 
       const data = await res.json();
+     
       setProperties(data);
     } catch (err) {
       console.error("Fetch error:", err);
