@@ -41,7 +41,6 @@ export const MapViewTracker: React.FC<MapViewTrackerProps> = ({
 
           if (lastViewState.current === null || isViewingCurrentLocation !== lastViewState.current) {
             lastViewState.current = isViewingCurrentLocation;
-            console.log('MapViewTracker: 🔄 VIEW STATE CHANGED TO:', isViewingCurrentLocation);
             onViewChange(isViewingCurrentLocation);
           }
         } catch (error) {

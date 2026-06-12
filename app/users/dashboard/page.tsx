@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ FIXED PATH
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -43,7 +42,6 @@ useEffect(() => {
 
       const data = await res.json();
       setProperties(data);
-      console.log("Fetched properties:", userId, data);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -104,13 +102,21 @@ useEffect(() => {
               key={p.id}
               className="bg-white p-5 rounded-2xl shadow hover:shadow-md transition flex gap-5 items-center"
             >
+              
+
+
               {/* IMAGE */}
-              <img
-  src={`${p.images?.[0]}`}
+          <img
+  src={
+    p.uploadedImages?.[0]
+      ? p.uploadedImages[0].startsWith("data:image")
+        ? p.uploadedImages[0]
+        : `data:image/jpeg;base64,${p.uploadedImages[0]}`
+      : "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop"
+  }
   alt="property"
   className="w-32 h-24 object-cover rounded-xl"
 />
-
               {/* DETAILS */}
               <div className="flex-1">
                 <h3 className="text-lg font-semibold">{p.title}</h3>

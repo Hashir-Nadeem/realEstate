@@ -271,7 +271,7 @@ console.log("Listing Type:", listingType);
           <!-- Row 3: Details with icons -->
           <div style="display:flex; flex-wrap:wrap; gap:8px 12px; margin-bottom:8px; font-size:12px; color:#666;">
             <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
-              <img src="/icons/ruler.png" width="14" height="14" style="object-fit:contain" alt="Area" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='/icons/Ruler.svg';}" />
+              <img  width="14" height="14" style="object-fit:contain" alt="Area" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='/icons/Ruler.svg';}" />
               <span>${areaDisplay}</span>
             </div>
             <div style="display:flex; align-items:center; gap:3px; flex-shrink:0">

@@ -10,7 +10,6 @@ import NearestPropertiesList from '@/components/NearestPropertiesList'
 import { calculateDistance } from '@/utils/locationUtils'
 import LocalCompsMap from '@/components/LocalCompsMap'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL
-
 interface Property {
   id: number | string
   imageUrl?: string
@@ -28,6 +27,12 @@ interface Property {
   propertyCategory?: string
   lat?: number
   lng?: number
+
+  Location?: {
+    type: "Point"
+    coordinates: [number, number] // [lng, lat]
+  }
+
   floorNumber?: string
   totalFloors?: string
   facing?: string
@@ -38,6 +43,39 @@ interface Property {
   contactPhone?: string
   contactPersonName?: string
   youAreHereTo?: string
+}
+
+
+export const getPropertyLatLng = (property: any) => {
+  const c = property?.location?.coordinates
+
+  if (!c) return null
+
+  // CASE 1: your current backend format (x/y object)
+  if (typeof c?.x === "number" && typeof c?.y === "number") {
+    return {
+      lat: c.x,
+      lng: c.y,
+    }
+  }
+
+  // CASE 2: values array (also present in your payload)
+  if (Array.isArray(c?.values)) {
+    return {
+      lat: Number(c.values[0]),
+      lng: Number(c.values[1]),
+    }
+  }
+
+  // CASE 3: standard GeoJSON fallback
+  if (Array.isArray(c)) {
+    return {
+      lng: Number(c[0]),
+      lat: Number(c[1]),
+    }
+  }
+
+  return null
 }
 
 export default function PropertyDetailsPage() {
@@ -71,6 +109,7 @@ export default function PropertyDetailsPage() {
       return
     }
 const normalizedProperty = {
+  
   id: selected.id,
   title: selected.title,
   beds: selected.bedrooms ? Number(selected.bedrooms) : undefined,
@@ -101,13 +140,15 @@ const normalizedProperty = {
       : "UNKNOWN",
 
   propertyCategory: selected.propertyCategory,
-  lat: selected.location?.coordinates?.[0],
-  lng: selected.location?.coordinates?.[1],
   whatsapp: selected.whatsapp,
   contactPersonName: selected.contactPersonName,
-  uploadedImages: selected.uploadedImages || []
+  uploadedImages: selected.uploadedImages || [],
+  lat: getPropertyLatLng(selected)?.lat,
+  lng: getPropertyLatLng(selected)?.lng
 };
-
+console.log("Extracting lat/lng from property:", {
+Location: selected.Location,
+})
 setProperty(normalizedProperty);
 
       } catch (err) {
@@ -195,8 +236,9 @@ setProperty(normalizedProperty);
     if (!property || !leafletLoaded.current || !window.L) return
 
     // Use actual property coordinates if available, otherwise use default Bangalore coordinates
-    const defaultLat = property.lat || 12.9716
-    const defaultLng = property.lng || 77.5946
+   const defaultLat = property.lat 
+
+const defaultLng = property.lng
 
     // Initialize Satellite Map (left side)
     const satelliteContainer = document.getElementById('satellite-map')
@@ -322,10 +364,6 @@ const getPropertyImages = (property: Property) => {
       "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop"
     );
   }
-
-  console.log("uploadedImages:", property.uploadedImages);
-  console.log("normalizedImages:", uniqueImages);
-
   return uniqueImages.slice(0, 2);
 };
 
@@ -435,8 +473,8 @@ const getPropertyImages = (property: Property) => {
           <div className="absolute top-4 left-4 z-[1000]">
             <button
               onClick={() => {
-                const lat = property?.lat || 12.9716
-                const lng = property?.lng || 77.5946
+                const lat = property?.lat 
+                const lng = property?.lng 
                 const streetViewUrl = `https://www.google.com/maps/@${lat},${lng},3a,75y,90t/data=!3m6!1e1!3m4!1s0x0:0x0!2e0!7i13312!8i6656`
                 window.open(streetViewUrl, '_blank')
               }}

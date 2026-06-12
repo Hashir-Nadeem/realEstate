@@ -1,9 +1,3 @@
-export const metadata = {
-  title: "City-wise Property FAQs in Pakistan",
-  description:
-    "Explore real estate FAQs for Islamabad, Lahore, Karachi and other major cities.",
-};
-
 export default function CityFaqPage() {
 const cities = [
   {

@@ -26,8 +26,7 @@ const cities: City[] = [
   { name: "Kolkata", lat: 22.5726, lng: 88.3639 },
   { name: "Mumbai", lat: 19.076, lng: 72.8777 },
   { name: "New Delhi", lat: 28.6139, lng: 77.209 },
-  { name: "Vijayawada", lat: 16.5062, lng: 80.648 },
-   { name: "Islamabad", lat: 33.6844, lng: 73.0479 } // Added Islamabad
+  { name: "Vijayawada", lat: 16.5062, lng: 80.648 }
 ]
 
 const tabs = [
@@ -77,34 +76,28 @@ export default function HomePage() {
           console.log('Initial location set, viewing current location: true')
         })
         .catch((error) => {
-          console.error("Failed to get initial location:", error)
           // Default to Bangalore if location access denied
           setInitialLocationSet(true)
           setIsViewingCurrentLocation(false)
-          console.log('Location failed, viewing current location: false')
+        
         })
     }
   }, [initialLocationSet, getCurrentLocation, setIsViewingCurrentLocation])
 
   const handleCitySelectWrapper = (city: City) => {
-    console.log('City selected:', city.name)
     handleCitySelect(city)
     setSearchQuery(city.name)
     setShowCityDropdown(false)
   }
 
   const handleRecenterToUserLocation = async () => {
-    console.log('HomePage: Recentering to user location')
     setIsRecentering(true)
     try {
       await getCurrentLocation(false)
       handleShowCurrentLocation()
       setSearchQuery("")
-      console.log('HomePage: Recenter complete, should be viewing current location')
-      // Keep recentering state for a bit longer to prevent flickering
       setTimeout(() => setIsRecentering(false), 1000)
     } catch (error) {
-      console.error("Error getting location:", error)
       setIsRecentering(false)
     }
   }
@@ -115,18 +108,12 @@ export default function HomePage() {
     
     // Only update if the state is actually different
     if (viewingCurrentLocation !== isViewingCurrentLocation) {
-      console.log('🔥 HomePage: Map view change callback triggered!');
-      console.log('HomePage: New viewingCurrentLocation:', viewingCurrentLocation);
       setIsViewingCurrentLocation(viewingCurrentLocation);
     }
   }
 
   // Debug log for button state with more detail  
   useEffect(() => {
-    console.log('🔄 HomePage: Button state effect triggered');
-    console.log('HomePage: isViewingCurrentLocation:', isViewingCurrentLocation);
-    console.log('HomePage: Selected city:', selectedCity?.name || 'none');
-    console.log('HomePage: User location:', userLocation ? `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}` : 'none');
   }, [isViewingCurrentLocation, selectedCity, userLocation])
 
   function handleSearchChange(value: string): void {
@@ -147,7 +134,6 @@ export default function HomePage() {
     )
 
     if (exactMatch) {
-      console.log("handleSearchChange: exact city match:", exactMatch.name)
       handleCitySelect(exactMatch)
       setSearchQuery(exactMatch.name)
       setShowCityDropdown(false)

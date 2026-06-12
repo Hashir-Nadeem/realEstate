@@ -48,22 +48,13 @@ export default function MapComponent({
   const [properties, setProperties] = useState<any[]>([])
  const fetchProperties = async () => {
   try {
-    console.log("🚀 Fetching properties from API...")
-
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/properties?limit=1000`)
-
-    console.log("SALE COUNT:", properties.filter(p=>p.type==="sale").length)
-
-    
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/properties/GetAllProperties?limit=1000`)
     if (!res.ok) {
       console.warn("❌ Failed to fetch properties:", res.statusText)
       return
     }
 
     const json = await res.json()
-
-console.log("✅ Full API JSON:", json)
-
 // 🔥 detect where actual array is
 let raw = []
 
@@ -78,14 +69,6 @@ if (Array.isArray(json)) {
 } else {
   console.warn("❌ Could not detect property array in API response")
 }
-
-console.log("📦 Extracted Property Array:", raw)
-
-    console.log("✅ Raw API Response:", raw)
-
-    // 🔥 IMPORTANT → Transform API payload to map marker format
- console.log("🧪 First Property Object:", raw[0])
-
 const mapped = (raw || [])
   .map((p: any, index: number) => {
 
@@ -135,24 +118,46 @@ if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
     ) {
       type = "rent"
     }
+  return {
+  id: p.id || p._id || index,
 
-    return {
-      id: p.id || index,
-      title: p.title,
-      price: `${p.price} ${p.priceUnit}`,
-      lat,
-      lng,
-      type,
-      address: p.fullAddress,
-      city: p.city,
-      locality: p.locality,
-    }
+  title: p.title,
+  description: p.description,
+
+  price: `${p.price} ${p.priceUnit}`,
+  rawPrice: p.price,
+  priceUnit: p.priceUnit,
+
+  lat,
+  lng,
+
+  type,
+
+  address: p.fullAddress,
+  city: p.city,
+  locality: p.locality,
+
+  beds: p.bedrooms,
+  baths: p.bathrooms,
+
+  area: p.area,
+  areaUnit: p.areaUnit,
+
+  category: p.propertyCategory,
+
+  contactPersonName: p.contactPersonName,
+  email: p.email,
+  whatsapp: p.whatsapp,
+
+  imageUrl:p.uploadedImages?.[0],
+
+  uploadedImages: p.uploadedImages || [],
+
+  createdAt: p.createdAt,
+}
+
   })
   .filter(Boolean)
-
-
-console.log("🔥 FINAL MARKER DATA:", mapped)
-console.log("TRANSACTION RAW:", mapped.map((p: any) => p.type))
 setProperties(mapped)
 
   } catch (e) {
@@ -324,9 +329,24 @@ setProperties(mapped)
           }).addTo(map)
 
           // Build a rich popup card matching the exact attached design
-          const img = (property as any).imageUrl || "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop"
-          const beds = (property as any).beds ?? '2'
-          const baths = (property as any).baths ?? '2'
+          const rawImage =
+  (property as any).uploadedImages?.[0] ||
+  (property as any).imageUrl;
+
+    let img =
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop";
+
+    if (rawImage) {
+      if (rawImage.startsWith("http")) {
+        img = rawImage;
+      } else if (rawImage.startsWith("/9j/")) {
+        img = `data:image/jpeg;base64,${rawImage}`;
+      } else if (rawImage.startsWith("iVBOR")) {
+        img = `data:image/png;base64,${rawImage}`;
+      }
+    }
+
+          const beds = (property as any).beds ?? "2";  const baths = (property as any).baths ?? '2'
           
           // Handle area display - use area field if available, otherwise fallback to sqft
           let areaDisplay = ''
@@ -421,7 +441,7 @@ setProperties(mapped)
           const popupContent = `
             <div style="position:relative;">
               ${closeBtn}
-              <div onclick="window.propertyDetailsHandler(${property.id})" style="width:400px; cursor:pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+              <div onclick="window.open('/property/${property.id}', '_blank')" style="width:400px; cursor:pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                 ${shareContainer}
                 
                 <!-- Image Section -->
@@ -436,7 +456,7 @@ setProperties(mapped)
                   <!-- Row 1: Property Type and Status -->
                   <div style="margin-bottom:6px;">
                     <span style="color:#333; font-size:14px; font-weight:600; line-height:1.3; display:block;">
-                      ${beds} BHK Flat FOR ${property.type === 'sale' ? 'SALE' : 'RENT'} in ${locality}, ${city}
+                      ${beds} BHK Flat FOR ${property.type === 'sell'|| property.type === 'sale' ? 'SALE' : 'RENT'} in ${locality}, ${city}
                     </span>
                   </div>
                   
@@ -448,8 +468,7 @@ setProperties(mapped)
                   <!-- Row 3: Details with icons - Flexible wrap layout -->
                   <div style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:8px; font-size:12px; color:#666;">
                     <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
-                      <img src="/icons/ruler.png" width="14" height="14" style="object-fit:contain" alt="Area" onerror="if(!this.dataset.fallback){this.dataset.fallback='true';this.src='/icons/Ruler.svg';}" />
-                      <span style="white-space:nowrap;">${areaDisplay}</span>
+                      <span style="white-space:nowrap;">${areaDisplay} ${property.areaUnit}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:3px; flex-shrink:0;">
                       <img src="/icons/bed.png" width="14" height="14" style="object-fit:contain" alt="Beds" />

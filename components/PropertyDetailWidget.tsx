@@ -113,7 +113,7 @@ export const PropertyDetailWidget: React.FC<Props> = ({ property }) => {
 
             {area && (
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <img src="/icons/ruler.png" width={14} height={14}/>
+                <img  width={14} height={14}/>
                 <span>{area}</span>
               </div>
             )}
