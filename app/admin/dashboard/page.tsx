@@ -29,8 +29,6 @@ const handleToggleStatus = async (id: string, currentStatus: string) => {
         },
       }
     )
-    console.log('Status update response:', res)
-
     if (!res.ok) throw new Error("Status update failed")
 
     setProperties((prev) =>

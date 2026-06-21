@@ -19,32 +19,31 @@ export default function AdminLayout({
     { name: 'Users', href: '/admin/users' },
   ]
 
-  const handleLogout = async () => {
-    try {
-      setLoading(true)
+const handleLogout = async () => {
+  try {
+    const refreshToken = localStorage.getItem("refreshToken");
+    const token = localStorage.getItem("token");
 
-      const refreshToken = localStorage.getItem('refreshToken')
-      const token = localStorage.getItem('token')
-
+    if (refreshToken && token) {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/logout`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ refreshToken }),
-      })
-
-    } catch (err) {
-      console.error('Logout failed', err)
-    } finally {
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-
-      router.push('/login')
-      setLoading(false)
+      });
     }
+  } catch (error) {
+    console.error("Logout failed:", error);
+  } finally {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+
+    window.location.replace("/login");
   }
+};
 
   return (
     <div className="flex min-h-screen bg-gray-100">

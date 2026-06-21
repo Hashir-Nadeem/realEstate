@@ -52,19 +52,39 @@ useEffect(() => {
 
   fetchProperties();
 }, [userId]);
-  // ================= LOGOUT =================
-  const handleLogout = () => {
+
+// ================= LOGOUT =================
+const handleLogout = async () => {
+  try {
+    const refreshToken = localStorage.getItem("refreshToken");
+    const token = localStorage.getItem("token");
+
+    if (refreshToken && token) {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Auth/logout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+    }
+  } catch (error) {
+    console.error("Logout failed:", error);
+  } finally {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
-    window.location.href = "/login";
-  };
+    window.location.replace("/login");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100">
 
       {/* ================= HEADER ================= */}
       <div className="sticky top-0 z-50 bg-white border-b px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-semibold">🏡 My Dashboard</h1>
+        <h1 className="text-xl font-semibold">My Dashboard</h1>
 
         <button
           onClick={handleLogout}
@@ -103,9 +123,6 @@ useEffect(() => {
               key={p.id}
               className="bg-white p-5 rounded-2xl shadow hover:shadow-md transition flex gap-5 items-center"
             >
-              
-
-
               {/* IMAGE */}
           <img
   src={

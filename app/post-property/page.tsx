@@ -480,22 +480,14 @@ try {
 
     const fd = new FormData();
     formData.photos.forEach((f) => fd.append("photos", f));
-
-    console.log("📦 FormData prepared with files:", formData.photos.length);
-
     const uploadRes = await fetch("/api/upload-images", {
       method: "POST",
       body: fd,
     });
 
-    console.log("📡 Upload response status:", uploadRes.status);
-
+   
    if (!uploadRes.ok) {
   const errText = await uploadRes.text();
-
-  console.error("❌ Upload failed");
-  console.error("Status:", uploadRes.status);
-  console.error("Response:", errText);
 
   throw new Error(
     `Image upload failed (${uploadRes.status}): ${errText}`
@@ -503,18 +495,15 @@ try {
 }
 
     const uploadJson = await uploadRes.json();
-    console.log("📥 Upload response JSON:", uploadJson);
-
+ 
     uploadedUrls = uploadJson.files || [];
-    console.log("✅ Uploaded URLs:", uploadedUrls);
+    console.log(" Uploaded URLs:", uploadedUrls);
   } else {
     console.log("ℹ️ No images to upload");
   }
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user?.id;
-
-  console.log("👤 User loaded:", userId);
 
   // 2️⃣ Prepare payload for .NET API
   const payload = {
@@ -557,11 +546,6 @@ try {
 
     submittedAt: new Date().toISOString(),
   };
-
-  console.log("📨 Final payload ready:", payload);
-
-  // 3️⃣ Send to .NET backend using apiRequest
-  console.log("➡️ Sending payload to /properties...");
 
   await apiRequest("/properties", {
     method: "POST",

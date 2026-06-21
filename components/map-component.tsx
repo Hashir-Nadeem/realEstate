@@ -837,13 +837,13 @@ setProperties(mapped)
 
     // Zoom to selected city with validation
     try {
-      map.setView([selectedCity.lat, selectedCity.lng], zoom)
+      console.log("Selected city:", selectedCity)
     } catch (e) {
       console.error("Error setting map view for city:", e)
     }
 
     // Add city boundary
-   // addCityBoundary(selectedCity)
+ //addCityBoundary(selectedCity)
 
     // Notify that we're no longer viewing current location
     if (onViewChange) {

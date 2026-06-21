@@ -83,16 +83,13 @@ const redirect = params.get('redirect');
 
 // Redirect back to the original page if it exists
 if (redirect) {
-  router.replace(redirect);
+  window.location.href = redirect;
 } else {
-  // Normal login flow
-  if (user?.role?.toLowerCase() === 'admin') {
-    router.replace('/admin/dashboard');
-  } else {
-    router.replace('/users/dashboard');
-  }
+  window.location.href =
+    user?.role?.toLowerCase() === 'admin'
+      ? '/admin/dashboard'
+      : '/users/dashboard';
 }
-
 // Force auth/UI refresh
 router.refresh();
 
@@ -206,9 +203,12 @@ router.refresh();
         <div className="text-center mt-6 pt-6 border-t border-gray-200">
           <p className="text-gray-600 text-sm">
             Don't have an account?{' '}
-            <Link href="/signup" className="text-red-600">
-              Create Account
-            </Link>
+          <Link
+  href={`/signup${redirectTo !== '/' ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
+  className="text-red-600"
+>
+  Create Account
+</Link>
           </p>
         </div>
 

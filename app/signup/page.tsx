@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, ArrowLeft, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+
 
 const COUNTRY_CODES = [
   { code: '+1', country: 'US', name: 'United States' },
@@ -77,12 +78,9 @@ const COUNTRY_CODES = [
   { code: '+216', country: 'TN', name: 'Tunisia' },
   { code: '+213', country: 'DZ', name: 'Algeria' }
 ]
-
-
 export default function SignupPage() {
   const router = useRouter()
-  const { signup } = useAuth()
-
+  const { signup, login } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -92,7 +90,6 @@ export default function SignupPage() {
     countryCode: '+91',
     role: 'User' 
   })
-
  
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -134,34 +131,105 @@ export default function SignupPage() {
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
+const searchParams = useSearchParams();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateForm()) return
+const handleAutoLogin = async () => {
+  try {
+    const loginResult = await login(
+      formData.email,
+       formData.password,
+      true,
+    );
 
-    setIsLoading(true)
+    console.log("Auto login result:", loginResult);
 
-    try {
-      const result = await signup({
-        name: formData.name,
-        email: formData.email,
-        phone: `${formData.countryCode}${formData.phone}`,
-        password: formData.password,
-        role: 'User' // 👈 PASS USER ROLE
-      })
 
-      if (result.success) {
-        router.push('/') // or "/dashboard"
-      } else {
-        setErrors({ general: result.message })
-      }
-    } catch {
-      setErrors({ general: 'Something went wrong' })
-    } finally {
-      setIsLoading(false)
+    if (!loginResult.success) {
+      setErrors({
+        general: loginResult.message ?? "Login failed after signup",
+      });
+      return false;
     }
-  }
 
+
+    const user =
+      loginResult.user ||
+      JSON.parse(localStorage.getItem("user") || "{}");
+
+
+    console.log("Auto login user:", user);
+
+    return true;
+
+  } catch (error) {
+
+    console.error("Auto login error:", error);
+
+    setErrors({
+      general: "Login failed after signup",
+    });
+
+    return false;
+  }
+};
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!validateForm()) return;
+
+  setIsLoading(true);
+  setErrors({});
+
+  try {
+
+    // 1. Create account
+    const signupResult = await signup({
+      name: formData.name,
+      email: formData.email,
+      phone: `${formData.countryCode}${formData.phone}`,
+      password: formData.password,
+      role: "User",
+    });
+
+
+    if (!signupResult.success) {
+      setErrors({
+        general: signupResult.message ?? "Signup failed",
+      });
+      return;
+    }
+
+
+    // 2. Auto login
+    const loggedIn = await handleAutoLogin();
+
+    // 3. Redirect
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+    if (redirect) {
+      window.location.href = redirect;
+    } else {
+      window.location.href = "/users/dashboard";
+    }
+
+
+    router.refresh();
+
+
+  } catch (error) {
+
+    console.error("Signup error:", error);
+
+    setErrors({
+      general: "Something went wrong. Please try again.",
+    });
+
+  } finally {
+
+    setIsLoading(false);
+
+  }
+};
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm border p-6">

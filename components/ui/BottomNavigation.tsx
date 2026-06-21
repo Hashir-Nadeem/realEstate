@@ -2,17 +2,31 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, List, HelpCircle, CircleDollarSign } from 'lucide-react'
+import { Search, List, HelpCircle, CircleDollarSign, LogIn,Home } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
-const tabs = [
-  { name: "Search", icon: Search, href: "/" },
-  { name: "List", icon: List, href: "/list" },
-  { name: "Help", icon: HelpCircle, href: "/help" },
-  { name: "Services", icon: CircleDollarSign, href: "/advertising" },
-]
 
 export const BottomNavigation = () => {
+
+const { user } = useAuth()
+
+const tabs = [
+  { name: 'Search', icon: Search, href: '/' },
+  { name: 'List', icon: List, href: '/list' },
+ {
+  name: user ? "Dashboard" : "Login",
+  icon: user ? Home : LogIn,
+  href: user
+    ? user.role?.toLowerCase() === "admin"
+      ? "/admin/dashboard"
+      : "/users/dashboard"
+    : "/login",
+},
+  { name: 'Help', icon: HelpCircle, href: '/help' },
+  { name: 'Services', icon: CircleDollarSign, href: '/advertising' },
+]
+
   const pathname = usePathname()
   const [safeBottom, setSafeBottom] = useState(0)
 
