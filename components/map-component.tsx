@@ -31,7 +31,7 @@ export default function MapComponent({
   showUserLocationOnStart = false,
   onViewChange,
   onZoomChange,
-  zoom = 12,
+  zoom = 13,
 }: MapComponentProps) {
   const mapRef = useRef<any>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -72,7 +72,10 @@ if (Array.isArray(json)) {
 const mapped = (raw || [])
   .map((p: any, index: number) => {
 
-   const coordsObj = p?.location?.coordinates
+   const coordsObj =
+  p?.Location?.coordinates ||
+  p?.location?.coordinates
+  
 
 if (!coordsObj) {
   console.warn("❌ No location for property:", p.id)
@@ -82,28 +85,24 @@ if (!coordsObj) {
 let lat = null
 let lng = null
 
-// CASE 1 → .NET driver format
-if (coordsObj?.values && Array.isArray(coordsObj.values)) {
-  lat = Number(coordsObj.values[0])
-  lng = Number(coordsObj.values[1])
+// CASE 1 → .NET driver format [lng, lat]
+if (Array.isArray(coordsObj?.values)) {
+  lng = Number(coordsObj.values[0])
+  lat = Number(coordsObj.values[1])
 }
 
-// CASE 2 → Mongo GeoJSON
+// CASE 2 → Mongo GeoJSON [lng, lat]
 else if (Array.isArray(coordsObj)) {
   lng = Number(coordsObj[0])
   lat = Number(coordsObj[1])
 }
 
-// CASE 3 → x y format
-else if (coordsObj?.x && coordsObj?.y) {
-  lat = Number(coordsObj.x)
-  lng = Number(coordsObj.y)
+// CASE 3 → x/y object
+else if (coordsObj?.x != null && coordsObj?.y != null) {
+  lng = Number(coordsObj.x)
+  lat = Number(coordsObj.y)
 }
 
-if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-  console.warn("❌ Invalid coords after parse:", coordsObj)
-  return null
-}
   // ✅ SMART transaction detection
     const t = String(p.youAreHereTo || "")
       .trim()
@@ -157,6 +156,9 @@ if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
 }
 
   })
+
+
+  
   .filter(Boolean)
 setProperties(mapped)
 
@@ -232,8 +234,6 @@ setProperties(mapped)
 
       // Wait for map to be ready before adding markers
       map.whenReady(() => {
-        console.log("Map is ready, adding initial markers")
-
         // Add user location marker if showing user location on start
         if (showUserLocationOnStart) {
           addUserLocationMarker(userLocation)
@@ -241,7 +241,6 @@ setProperties(mapped)
           // Add city boundary for initial location
           // addCityBoundary(userLocation)
         }
-
         // Add property markers using real data
         addPropertyMarkers(map, L)
       })
@@ -310,6 +309,7 @@ setProperties(mapped)
       })
     }
 
+    
     // Filter and add property markers based on toggles
     properties
       .filter(
@@ -317,16 +317,33 @@ setProperties(mapped)
           (showSale && (property.type === "sale" || property.type?.startsWith("sale-"))) ||
           (showRental && property.type === "rent")
       )
+    
       .forEach((property) => {
         try {
+
+          
           // Determine saleType for icon color
           let saleType = "residential" // default
           if (property.type === "sale-luxury") saleType = "luxury"
           else if (property.type === "sale-commercial") saleType = "commercial"
           
-          const marker = L.marker([property.lat, property.lng], {
-           icon: createCustomIcon(property.type, saleType),
-          }).addTo(map)
+         const lat = Number(property.lat)
+const lng = Number(property.lng)
+if (
+  isNaN(lat) ||
+  isNaN(lng) ||
+  lat < -90 ||
+  lat > 90 ||
+  lng < -180 ||
+  lng > 180
+) {
+  console.error("❌ INVALID MARKER COORDS", property)
+  return
+}
+
+const marker = L.marker([lat, lng], {
+  icon: createCustomIcon(property.type, saleType),
+}).addTo(map)
 
           // Build a rich popup card matching the exact attached design
           const rawImage =
@@ -837,13 +854,13 @@ setProperties(mapped)
 
     // Zoom to selected city with validation
     try {
-      console.log("Selected city:", selectedCity)
+      map.setView([selectedCity.lat, selectedCity.lng], zoom)
     } catch (e) {
       console.error("Error setting map view for city:", e)
     }
 
     // Add city boundary
- //addCityBoundary(selectedCity)
+   // addCityBoundary(selectedCity)
 
     // Notify that we're no longer viewing current location
     if (onViewChange) {

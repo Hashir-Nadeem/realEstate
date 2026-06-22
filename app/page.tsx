@@ -32,10 +32,10 @@ const cities: City[] = [
 const tabs = [
   { name: "Search", icon: Search },
   { name: "List", icon: List },
-  { name: "Dashboard", icon: List },
   { name: "Help", icon: HelpCircle },
   { name: "Services", icon: Settings },
 ]
+
 export default function HomePage() {
   const [selectedTab, setSelectedTab] = useState("Search")
   const [searchQuery, setSearchQuery] = useState("")
@@ -73,7 +73,6 @@ export default function HomePage() {
         .then(() => {
           setInitialLocationSet(true)
           setIsViewingCurrentLocation(true)
-          console.log('Initial location set, viewing current location: true')
         })
         .catch((error) => {
           // Default to Bangalore if location access denied
@@ -246,14 +245,6 @@ export default function HomePage() {
             if (tab.name === "List") {
               return (
                 <Link href="/list" key={tab.name} className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-600 hover:text-gray-800 transition-colors">
-                  <Icon className="w-6 h-6 mb-1" />
-                  <span className="text-xs font-medium">{tab.name}</span>
-                </Link>
-              )
-            }
-              if (tab.name === "Dashboard") {
-              return (
-                <Link href="/users/dashboard" key={tab.name} className="flex flex-col items-center py-2 px-3 rounded-lg text-gray-600 hover:text-gray-800 transition-colors">
                   <Icon className="w-6 h-6 mb-1" />
                   <span className="text-xs font-medium">{tab.name}</span>
                 </Link>
