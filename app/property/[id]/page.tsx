@@ -45,33 +45,34 @@ interface Property {
   youAreHereTo?: string
 }
 
-
 export const getPropertyLatLng = (property: any) => {
-  const c = property?.location?.coordinates
+  const c =
+    property?.Location?.coordinates ||
+    property?.location?.coordinates
 
   if (!c) return null
 
-  // CASE 1: your current backend format (x/y object)
-  if (typeof c?.x === "number" && typeof c?.y === "number") {
+  // CASE 1: .NET Point (x = lng, y = lat)
+  if (c?.x != null && c?.y != null) {
     return {
-      lat: c.x,
-      lng: c.y,
+      lat: Number(c.y),
+      lng: Number(c.x),
     }
   }
 
-  // CASE 2: values array (also present in your payload)
+  // CASE 2: .NET values array [lng, lat]
   if (Array.isArray(c?.values)) {
     return {
-      lat: Number(c.values[0]),
-      lng: Number(c.values[1]),
+      lat: Number(c.values[1]),
+      lng: Number(c.values[0]),
     }
   }
 
-  // CASE 3: standard GeoJSON fallback
+  // CASE 3: GeoJSON [lng, lat]
   if (Array.isArray(c)) {
     return {
-      lng: Number(c[0]),
       lat: Number(c[1]),
+      lng: Number(c[0]),
     }
   }
 
